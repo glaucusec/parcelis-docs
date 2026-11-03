@@ -22,6 +22,8 @@ Parcelis maintainers review reports privately outside the app and remove sensiti
 
 Your description, selected context, and screenshots remain available so you can retry or go back and edit. Avoid refreshing or navigating away before retrying: drafts are held only in this browser page and are not stored as report history. After repeated attempts, wait 15 minutes before trying again.
 
+Closing the form keeps your description and screenshots, but clears optional page and browser/app context. Select those options again after reopening the form to include current information.
+
 Ask your administrator to check [outgoing email settings](./email-settings.md) if the error continues. Reports use the active organization's saved SMTP settings or the deployment SMTP configuration when no organization configuration exists. The recipient is always **support@parcelis.dev**; organizations cannot redirect product bug reports to another inbox. SMTP acceptance confirms submission, but does not guarantee inbox delivery.
 
 For a self-hosted deployment with an additional reverse proxy, allow at least 16 MB request bodies for `/trpc/bugReports.submit`. The bundled proxies already allow this size. An email provider may impose its own message size limits, including encoding overhead; use fewer or smaller screenshots if needed.
