@@ -1,0 +1,18 @@
+packages:
+  - '.'
+
+onlyBuiltDependencies:
+  - '@swc/core'
+
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - core-js
+  - postman-code-generators
+
+overrides:
+  serialize-javascript: ^7.1.4
+  tinypool: ^2.2.0
+  sockjs>uuid: ^11.1.1
+  postman-collection>uuid: ^11.1.1
+  yaml@1: ^1.10.3
+  js-yaml@4: ^4.3.2

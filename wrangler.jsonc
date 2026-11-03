@@ -1,0 +1,8 @@
+{
+  "name": "parcelis-docs",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./docusaurus-site/build"
+  },
+  "previews": {}
+}

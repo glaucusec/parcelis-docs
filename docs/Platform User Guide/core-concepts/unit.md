@@ -1,0 +1,8 @@
+---
+title: Unit
+excerpt: ""
+hidden: false
+---
+A unit is a rentable or assignable space within a property. Parcelis shows unit counts, occupied units, vacancy, lease status, rent, overdue balances, lease expirations, and open maintenance tickets where available.
+
+Units can have internal notes for operational context.

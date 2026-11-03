@@ -1,0 +1,9 @@
+---
+title: Maintenance Ticket
+slug: /maintenance-ticket
+---
+A maintenance ticket represents a request or work item tied to a property and, when applicable, one or more units.
+It records the issue, category, requester, priority, entry-consent decision, status, notes, and attached images.
+
+Tickets can be New, In Progress, Pending, Scheduled, Resolved, Closed, or Canceled. Property and unit pages surface
+active tickets and link to their detail pages.

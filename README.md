@@ -1,5 +1,8 @@
 # Welcome to your ReadMe docs 👋
 
+> Docusaurus site scaffold: see [`docusaurus-site/`](./docusaurus-site/).  
+> Source branch: `docusaurus-docs-site`; deployment: Cloudflare Pages at `docs.parcelis.dev`..
+
 This repo is the home for your [ReadMe](https://readme.com) documentation. Everything here, including guides, API references, and custom pages, shows up on your docs site.
 
 The easiest way to work on your docs locally is with the [`@readme/cli`](https://www.npmjs.com/package/@readme/cli). Here are a few commands to get you started:
@@ -23,3 +26,6 @@ npx @readme/cli --help
 ```
 
 Want to learn more? Read [about ReadMe](https://docs.readme.com/main/docs/about-readme) or browse the [`@readme/cli` on npm](https://www.npmjs.com/package/@readme/cli).
+
+
+### Testing

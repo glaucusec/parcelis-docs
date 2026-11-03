@@ -1,0 +1,8 @@
+---
+title: Collapse Navigation
+excerpt: ""
+hidden: false
+---
+Use the sidebar collapse control to make the navigation narrower. Parcelis remembers this preference in the browser.
+
+Press `Cmd+B` on macOS or `Ctrl+B` on Windows and Linux to collapse or expand the sidebar from the keyboard.

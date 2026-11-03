@@ -1,0 +1,4 @@
+---
+title: "Amenities"
+hidden: false
+---

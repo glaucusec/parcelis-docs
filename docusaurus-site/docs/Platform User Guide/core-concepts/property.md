@@ -1,0 +1,7 @@
+---
+title: Property
+slug: /property
+---
+A property is a managed asset such as an apartment building, condo, duplex, house, commercial space, HOA, mixed-use building, parking asset, self-storage facility, manufactured home community, trailer property, or other asset type.
+
+Properties can have internal notes for operational context.
