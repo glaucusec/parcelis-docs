@@ -18,6 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     name: dependencies-action-plus
     steps:
-    - uses: scoobs-mystery-bytes/dependencies-action-plus@main
+    - uses: scoobs-mystery-bytes/dependencies-action-plus@7ae96d5f6a545e3b00f68feda55df5812464339c
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
