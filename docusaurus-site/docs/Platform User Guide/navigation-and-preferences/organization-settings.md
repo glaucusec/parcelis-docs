@@ -4,7 +4,7 @@ slug: /organization-settings
 ---
 Open **Settings**, then select **Organization** and **General** to manage the active organization.
 
-Organization administrators can update the organization name, address, phone number, and URL slug. Saving a new
+Organization administrators can update the organization name, address, phone number, contact email address, and URL slug. Saving a new
 slug updates the organization URL; use the new URL for subsequent navigation.
 
 Set **Timezone for lease dates** to the organization's timezone. Existing organizations use UTC until an
@@ -28,6 +28,15 @@ editor, which accepts:
 
 All address fields are optional and can be left blank. Members without administrator access see the saved address
 as read-only text.
+
+### Organization contact email
+
+Enter a valid address in **Organization email address (optional)** and select **Update organization** to save the
+business's primary contact email. Leave the field blank to remove it. Existing organizations can keep it empty;
+members with view-only access see the saved address or **Not provided**.
+
+This contact address does not change the sender or SMTP configuration for outgoing messages. Configure those
+separately in [Email Settings](./email-settings.md).
 
 If you can access more than one organization, use the **Organization** selector near the top of the expanded sidebar
 to switch workspaces. Properties, tenants, leases, invoices, maintenance, and related operational records are shown
