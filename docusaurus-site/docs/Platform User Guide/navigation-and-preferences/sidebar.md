@@ -13,6 +13,13 @@ Collapsing the sidebar switches to the Parcelis mark while preserving access to 
 over the collapsed sidebar to temporarily expand it. The organization selector and avatar are available when the
 sidebar is expanded.
 
+## Page navigation
+
+Settings, Applications, and full invoice detail pages have a secondary navigation rail. On phones and tablets,
+the page heading appears first, followed by the navigation rail and page content. On desktop, the rail appears
+to the left of the heading and content. Use the rail to move between related settings, application views, or
+invoices.
+
 ## My Account menu
 
 Select **My Account** at the bottom of the sidebar to access account and community resources. The menu includes:
