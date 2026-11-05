@@ -33,6 +33,14 @@ invoice. The form shows the subtotal, paid amount, and balance due before the in
 item names and descriptions in
 **Settings → Invoicing**. Saved invoices keep a copy of the item and description as entered.
 
+If you change any field or add a charge line, closing the drawer with **X**, **Cancel**, an outside click, or **Escape**
+shows **Your changes will not be saved.** Select **Keep Editing** to retain all entered values, or **Discard** to close
+the drawer and clear the form. Pressing **Escape** in the confirmation also keeps your edits. An untouched form, or
+one returned to its initial values, closes without a warning.
+
+The drawer stays open while invoice creation is in progress. A successful save closes and clears it; if creation
+fails, your values remain available to edit or retry, and closing still requires confirmation.
+
 ## Manage an Invoice
 
 Select an invoice identifier to open its details. The property rail groups invoices by property and unit, making it
