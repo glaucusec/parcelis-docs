@@ -9,7 +9,9 @@ slug updates the organization URL; use the new URL for subsequent navigation.
 
 Set **Timezone for lease dates** to the organization's timezone. Existing organizations use UTC until an
 administrator selects another timezone. This setting determines the local calendar day for automated lease
-activation and expiration.
+activation and expiration. Note timestamps also use this timezone, including daylight saving time.
+While the timezone loads, notes remain visible and their timestamps are hidden. If loading fails,
+select **Retry** beside **Unable to load note timestamps** to load the timestamps again.
 
 Administrators can also upload or remove separate organization avatars for light and dark themes. Use JPG, PNG,
 WebP, or GIF images up to 2 MB. The active organization's avatar appears in the expanded sidebar.
