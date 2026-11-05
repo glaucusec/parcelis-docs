@@ -14,7 +14,8 @@ Each ticket has a sequential reference number in the format `MNT-0000001`. Use t
 ticket with another team member.
 
 The collapsed **Logging** card shows recent activity across maintenance tickets. Expand it to review when a
-note was added or a ticket was acknowledged, resolved, canceled, reopened, or otherwise moved to a different status.
+note was added, edited, or deleted, or a ticket was acknowledged, resolved, canceled, reopened, or otherwise moved
+to a different status. Note activity remains in the history after a note is deleted.
 
 The ticket detail header groups **Edit Maintenance** with the current workflow action: **Acknowledge** for new tickets, **Resolve** for other active tickets, or **Reopen Ticket** for resolved tickets. **Actions** contains **Add Notes** and **Cancel Ticket**. On mobile, all header actions move into Actions. Existing permission, note, and confirmation requirements still apply.
 
@@ -39,3 +40,7 @@ requires a cancellation note.
 Ticket details show status, requester, issue date, category, priority, description, and entry consent. Photos are
 view-only and open in a gallery. Recent notes show the latest five notes, support inline edit and delete, and link to
 the full Notes drawer. Property and unit detail pages link listed maintenance items to their ticket details.
+
+Editing or deleting a maintenance note from Recent notes or the Notes drawer also records an activity entry
+for that ticket. Expand **Logging** on the ticket to review these changes. The audit record identifies the note
+and the user who made the change; it does not preserve earlier versions of the note text.
