@@ -5,7 +5,7 @@ hidden: false
 ---
 These diagrams describe the PostgreSQL data model in [`schema.prisma`](https://github.com/parcelis/parcelis/blob/main/packages/db/prisma/schema.prisma). They show primary keys, foreign keys, and selected fields that explain each relationship. The Prisma schema is the source of truth for every column, index, enum, and delete action.
 
-[Download the editable Visio drawing](https://github.com/parcelis/parcelis/blob/main/apps/docs/static/diagrams/parcelis-database-erd.vsdx). It includes a complete overview followed by eight detail pages. The overview is also available as a [single-page Visio drawing](https://github.com/parcelis/parcelis/blob/main/apps/docs/static/diagrams/parcelis-database-erd-overview.vsdx) or a [PNG image](https://github.com/parcelis/parcelis/blob/main/apps/docs/static/diagrams/parcelis-database-erd-overview.png).
+[Download the editable Visio drawing](https://raw.githubusercontent.com/parcelis/parcelis/ac46b31332e17ac40879c48e3e886e5ee015294b/apps/docs/static/diagrams/parcelis-database-erd.vsdx). It includes a complete overview followed by eight detail pages. The overview is also available as a [single-page Visio drawing](https://raw.githubusercontent.com/parcelis/parcelis/ac46b31332e17ac40879c48e3e886e5ee015294b/apps/docs/static/diagrams/parcelis-database-erd-overview.vsdx) or a [PNG image](https://raw.githubusercontent.com/parcelis/parcelis/ac46b31332e17ac40879c48e3e886e5ee015294b/apps/docs/static/diagrams/parcelis-database-erd-overview.png).
 
 The downloadable drawings predate `ApiToken`; its relationships are documented in
 the Organizations and access diagram below.

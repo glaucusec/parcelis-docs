@@ -95,7 +95,9 @@ pnpm --filter @parcelis/web typecheck
 pnpm --filter @parcelis/schemas lint
 pnpm --filter @parcelis/api lint
 pnpm --filter @parcelis/web lint
-pnpm --filter @parcelis/docs build
+cd ../parcelis-docs/parcelis-docs/docusaurus-site
+pnpm typecheck
+pnpm build
 ```
 
 The release integration test removes only the empty token table from its disposable

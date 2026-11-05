@@ -4,7 +4,7 @@ excerpt: ""
 hidden: false
 ---
 Parcelis uses a pnpm and Turborepo workspace with separate applications for the web
-interface, API, background worker, and documentation.
+interface, API, and background worker. Documentation is maintained in a separate repository.
 
 ## Applications
 
@@ -13,7 +13,6 @@ interface, API, background worker, and documentation.
 | `apps/web`    | Next.js App Router frontend with React and shared UI components.            |
 | `apps/api`    | Next.js App Router API running in Node.js, with tRPC, REST, and Bull Board. |
 | `apps/worker` | Redis-backed background jobs and durable notification delivery.             |
-| `apps/docs`   | Docusaurus documentation and API reference.                                 |
 
 The web app and API run as separate processes. Browsers use the web origin's
 `/trpc` paths; the development and deployment proxies forward those requests to
@@ -131,3 +130,5 @@ pnpm --filter @parcelis/api test
 See [End-to-End Testing](doc:end-to-end-testing) for browser workflow checks and
 [Deploy With Docker Compose](doc:deploy-with-docker-compose) for
 the deployment topology.
+
+Documentation is maintained and deployed independently in [parcelis/parcelis-docs](https://github.com/parcelis/parcelis-docs). The application retains OpenAPI generation; Next.js redirects legacy `/docs` URLs to `https://docs.parcelis.dev/`.

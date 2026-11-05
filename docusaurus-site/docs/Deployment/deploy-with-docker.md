@@ -2,7 +2,7 @@
 title: Deploy with Docker
 slug: /deploy-with-docker
 ---
-Parcelis ships published container images for the application and documentation site. The simplest way to run the platform is to use Docker directly when you already have PostgreSQL and S3-compatible storage services available.
+Parcelis ships published container images for the application. The simplest way to run the platform is to use Docker directly when you already have PostgreSQL and S3-compatible storage services available.
 
 :::danger
 **Existing PostgreSQL 16 installations**
@@ -13,7 +13,7 @@ For Docker-direct deployments using an external database, use your provider's ma
 :::
 ## Requirements
 
-To run Parcelis with Docker, the minimum requirements are simply those required to install and run Docker. The production Compose stack includes nginx as the proxy for the web app, API, and documentation site.
+To run Parcelis with Docker, the minimum requirements are simply those required to install and run Docker. The production Compose stack includes nginx as the proxy for the web app and API.
 
 ## Setting up Parcelis
 
@@ -42,13 +42,13 @@ docker run -d --name parcelis-app \
   parcelis/apps:v0.4.1
 ```
 
-The published documentation image is designed to be mounted at `/docs/` by the nginx proxy. Use the production Compose stack when serving the application and documentation site together.
+The published documentation image is designed to be mounted at `/docs/` by the nginx proxy. Use the production Compose stack when serving the application together.
 
 ```bash
 docker compose --env-file .env.production up -d
 ```
 
-For a single-image deployment that bundles the web app, API, worker, documentation site, and nginx routing into one container, see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+For a single-image deployment that bundles the web app, API, worker, and nginx routing into one container, see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
 :::warning
 If you are planning to run Parcelis in a production environment, update the values for the database, object storage, and authentication settings before you expose the service publicly. Use strong, unique credentials and keep them out of shell history and version control.
@@ -85,7 +85,7 @@ The app container expects the following values at minimum:
 - `S3_BUCKET`: the object-storage bucket used for uploaded images
 - `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`: credentials for object storage
 
-The nginx proxy exposes the web app at `/`, documentation at `/docs/`, and
+The nginx proxy exposes the web app at `/`, legacy documentation links at `/docs/` redirecting to `https://docs.parcelis.dev/`, and
 the API at `/api/v1`.
 
 ## Optional environment variables

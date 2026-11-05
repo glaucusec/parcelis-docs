@@ -2,13 +2,15 @@
 title: Deploy with Docker Compose
 slug: /deploy-with-docker-compose
 ---
-Docker Compose is the recommended way to deploy Parcelis for a full production-style environment because it starts the application, documentation site, PostgreSQL, and MinIO together and runs the migration and storage initialization steps automatically.
+Docker Compose is the recommended way to deploy Parcelis for a full production-style environment because it starts the application, PostgreSQL, Redis, and MinIO together and runs the migration and storage initialization steps automatically.
 
 :::danger
 **Existing PostgreSQL 16 installations**
 
 The supplied Compose files now require PostgreSQL 18. **Before running `up` with the updated files, follow [Upgrade PostgreSQL 16 to 18](upgrade-postgresql.md).** Prisma migrations do not upgrade the database server. Existing volumes are preserved, and startup is blocked until the data migration is verified.
 :::
+Documentation is hosted independently at [docs.parcelis.dev](https://docs.parcelis.dev/). New releases no longer publish or run `parcelis/docs`; application `/docs` links redirect to the hosted site. When upgrading, use `--remove-orphans` with `docker compose up` to remove the old docs container.
+
 ## Requirements
 
 To run the Parcelis platform, the minimum requirements are simply those required to install and run Docker. For production deployments, we recommend a Linux host with a supported Docker engine and Compose v2 installation.
@@ -23,7 +25,16 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. Set `PARCELIS_VERSION` in `.env.production` to the release image tag, or the tag assigned to locally built images from the selected commit. This value is a tag only, such as `local-abc123`, not a full image reference. All three images—`parcelis/apps`, `parcelis/proxy`, and `parcelis/docs`—must be available with that same tag. For locally built images, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
+Replace the placeholder before running these commands. Set the required `PARCELIS_VERSION` in `.env.production` to a release image tag that includes the documentation removal, or the tag assigned to locally built images from the selected commit. Older releases such as `v0.4.1` and `v0.9.0` require their matching deployment files and documentation service. This value is a tag only, such as `local-abc123`, not a full image reference. Both images—`parcelis/apps` and `parcelis/proxy`—must be available with that same tag. For locally built images, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
+
+Until a compatible release is published, build the two modular images from a checkout containing the documentation removal:
+
+```bash
+docker build --target app -f Dockerfile.app -t parcelis/apps:local-docs-independent .
+docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:local-docs-independent .
+```
+
+Set `PARCELIS_VERSION=local-docs-independent` in `.env.production` and skip `pull` for these local images. The optional single-image stack instead uses `parcelis/parcelis`; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
 For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
@@ -35,7 +46,7 @@ docker compose --env-file .env.production pull
 docker compose --env-file .env.production up -d --remove-orphans
 ```
 
-The stack will run the migration job first, then start the app and docs services once the database and object storage are ready.
+The stack will run the migration job first, then start the application and worker services once the database and object storage are ready.
 
 Sign-ins use NextAuth JWT sessions with a seven-day rolling expiry and no inactivity timeout. NextAuth renews sessions through its session endpoints. Cookies from the previous session implementation require signing in again with existing credentials.
 
@@ -53,7 +64,6 @@ Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before sa
 - `migrate` runs Prisma migrations before the app starts
 - `minio-init` creates the object-storage buckets and uploads public brand assets
 - `app` serves the web UI and API
-- `docs` serves the documentation site
 
 ## API runtime
 

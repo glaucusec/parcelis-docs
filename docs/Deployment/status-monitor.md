@@ -33,13 +33,12 @@ If the monitor is temporarily unreachable, the page retains its last results and
 The monitor reads the root `.env` and checks every 30 seconds after the previous cycle
 finishes. Restart the worker after updating it to enable heartbeats and test jobs.
 
-Seven component rows contain expandable check details:
+Six component rows contain expandable check details:
 
 | Component        | Checks                                                                                                                       |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Web application  | Page response, CSRF endpoint, sign-in, and session validation                                                                |
 | API              | Health response, rejection of anonymous protected requests, and authenticated account lookup                                 |
-| Documentation    | Successful HTTP response containing `Parcelis`                                                                               |
 | PostgreSQL       | `SELECT 1`                                                                                                                   |
 | Redis            | Authenticated `PING`                                                                                                         |
 | Object storage   | Bucket access plus signed upload/download and cleanup of a unique test object                                                |
@@ -71,9 +70,7 @@ Optional monitor environment variables:
 | `STATUS_INTERNAL_URL`      | Web proxy upstream; `http://localhost:40020` (uses `STATUS_PORT` when set) |
 | `STATUS_WEB_URL`           | `http://localhost:30000/login`                                             |
 | `STATUS_API_URL`           | `http://localhost:40010/api/v1/health`                                     |
-| `STATUS_DOCS_URL`          | `http://localhost:40000/`                                                  |
 | `STATUS_WEB_EXPECTED`      | `Parcelis`                                                                 |
-| `STATUS_DOCS_EXPECTED`     | `Parcelis`                                                                 |
 | `STATUS_AUTH_EMAIL`        | Unset; dedicated active monitoring account                                 |
 | `STATUS_AUTH_PASSWORD`     | Unset; monitoring account password                                         |
 | `STATUS_ALERT_WEBHOOK_URL` | Disabled; optional JSON POST on component status changes                   |

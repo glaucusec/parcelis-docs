@@ -2,7 +2,7 @@
 title: Deploy with the Single-Image Docker Build
 slug: /deploy-with-docker-compose-single-image
 ---
-Parcelis publishes an optional **single application image**, `parcelis/parcelis`, that bundles the web app, API, worker, documentation site, and nginx edge routing into one application image. This is not a single-container deployment: PostgreSQL, Redis, and S3-compatible object storage (such as MinIO) remain separate services. The published `parcelis/apps`, `parcelis/docs`, and `parcelis/proxy` modular images continue to be published alongside it.
+Parcelis publishes an optional **single application image**, `parcelis/parcelis`, that bundles the web app, API, worker, and nginx edge routing into one application image. This is not a single-container deployment: PostgreSQL, Redis, and S3-compatible object storage (such as MinIO) remain separate services. The published `parcelis/apps` and `parcelis/proxy` modular images continue to be published alongside it.
 
 PostgreSQL, Redis, and S3-compatible object storage (such as MinIO) remain external services. Database migrations are still an explicit deployment step.
 
@@ -17,17 +17,25 @@ Use `parcelis/parcelis` when you want:
 
 - One application image and one exposed application port.
 - A simpler self-hosted setup that is closer to a single deployable unit.
-- The same public URL layout as the modular stack: web app at `/`, tRPC at `/trpc/*`, public API at `/api/*`, job dashboard at `/admin/jobs/`, documentation at `/docs/`.
+- The same public URL layout as the modular stack: web app at `/`, tRPC at `/trpc/*`, public API at `/api/*`, job dashboard at `/admin/jobs/`, legacy documentation links at `/docs/` redirecting to `https://docs.parcelis.dev/`.
 
-Use the modular [Docker Compose stack](deploy-with-docker-compose.md#setting-up-parcelis) when you want the documentation site and proxy as separately deployed or scaled services, or when you want to keep the proxy on a separate container. Note that the web app and API run together inside the `parcelis/apps` image in the modular stack, so neither topology scales the web app independently from the API.
+Use the modular [Docker Compose stack](deploy-with-docker-compose.md#setting-up-parcelis) when you want to deploy or scale the proxy separately. Note that the web app and API run together inside the `parcelis/apps` image in the modular stack, so neither topology scales the web app independently from the API.
 
 ## Image name and tags
 
-The image is published from each GitHub release with the version tag and `latest`. Replace `v0.4.1` with the version you want to run.
+The image is published from each GitHub release with its version tag. Use a release that includes documentation removal, or build from the matching application checkout. The environment template leaves `PARCELIS_VERSION` empty so deployment fails until a compatible tag is selected.
 
 | Image               | Tag examples       |
 | ------------------- | ------------------ |
-| `parcelis/parcelis` | `v0.4.1`, `latest` |
+| `parcelis/parcelis` | `local-docs-independent` |
+
+Until a compatible release is published, build from a checkout containing the documentation removal and set `PARCELIS_VERSION=local-docs-independent` in `.env.production`:
+
+```bash
+docker build --target single-image -f Dockerfile.app -t parcelis/parcelis:local-docs-independent .
+```
+
+Skip `pull` when using this local image.
 
 ## Required environment variables
 
@@ -103,7 +111,7 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. Set `PARCELIS_VERSION` in `.env.production` to the release image tag, or the tag assigned to the locally built `parcelis/parcelis` image from the selected commit. This value is a tag only, such as `local-abc123`, not a full image reference. The application, migration, and worker services all use `parcelis/parcelis` with that same tag. For a locally built image, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
+Replace the placeholder before running these commands. Set the required `PARCELIS_VERSION` in `.env.production` to a release image tag that includes the documentation removal, or the tag assigned to the locally built `parcelis/parcelis` image from the selected commit. Older releases must use their matching deployment files. This value is a tag only, such as `local-abc123`, not a full image reference. The application, migration, and worker services all use `parcelis/parcelis` with that same tag. For a locally built image, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
 
 For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
@@ -122,7 +130,7 @@ The single application image Compose stack will:
 - Start `app-service` once both jobs have completed successfully and the database and object storage are ready.
 - Start `worker-service` from the same `parcelis/parcelis` image to process background jobs once migrations are applied and Redis is healthy.
 
-`app-service` exposes the web app at `/`, tRPC at `/trpc/*`, the public API at `/api/*`, the job dashboard at `/admin/jobs/`, and the documentation site at `/docs/`, on the configured `APP_PORT` (default `3000`).
+`app-service` exposes the web app at `/`, tRPC at `/trpc/*`, the public API at `/api/*`, and the job dashboard at `/admin/jobs/` on the configured `APP_PORT` (default `3000`). Legacy `/docs/` links redirect to `https://docs.parcelis.dev/`.
 
 ## Upgrading and running migrations
 
@@ -149,14 +157,14 @@ If migration fails, keep application traffic disabled until the failure is resol
 
 | Concern                               | Single application image stack                                                              | Modular stack                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Number of running containers          | One application container plus a worker container plus the migrate and minio-init one-shots | Separate `app` and `worker` containers plus `docs` and `proxy` plus the same one-shots |
-| Image publishes                       | `parcelis/parcelis` only                                                                    | `parcelis/apps`, `parcelis/docs`, and `parcelis/proxy`                                  |
-| Documentation site                    | Served from the bundled `parcelis/parcelis` image at `/docs/`                               | Served from the separate `parcelis/docs` container at `/docs/`                         |
+| Number of running containers          | One application container plus a worker container plus the migrate and minio-init one-shots | Separate `app` and `worker` containers plus `proxy` plus the same one-shots |
+| Image publishes                       | `parcelis/parcelis` only                                                                    | `parcelis/apps` and `parcelis/proxy`                                  |
+| Documentation site                    | Hosted independently at `https://docs.parcelis.dev/`                               | Hosted independently at `https://docs.parcelis.dev/`                         |
 | Edge routing                          | nginx inside the `parcelis/parcelis` image                                                  | Standalone `parcelis/proxy` image                                                      |
-| Independent scaling of docs and proxy | Not supported (bundled into the application image)                                          | Supported                                                                              |
+| Independent scaling of proxy | Not supported (bundled into the application image)                                          | Supported                                                                              |
 | Independent scaling of web vs API     | Not supported (both run together in either topology)                                        | Not supported (both run together in the `parcelis/apps` image)                          |
 | PostgreSQL, Redis, and object storage | Separate services, identical to the modular stack                                           | Separate services, identical to the single-image stack                                 |
 | Migration job                         | Uses the `parcelis/parcelis` image with `prisma migrate deploy`                             | Uses the `parcelis/apps` image with `prisma migrate deploy`                             |
 | Background worker                     | `worker-service` from the same `parcelis/parcelis` image                                    | `worker-service` from the same `parcelis/apps` image                                    |
 
-Pick the single application image when simpler deployment topology is more valuable than deploying docs and the proxy independently. Pick the modular stack when you already run the proxy, app, and documentation as separate services, or when you need to scale or deploy docs and the proxy independently.
+Pick the single application image for a simpler deployment topology. Pick the modular stack when you need to deploy or scale the proxy separately from the application. Documentation is hosted independently in both topologies.

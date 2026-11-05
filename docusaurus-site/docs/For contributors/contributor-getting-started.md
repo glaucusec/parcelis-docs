@@ -2,7 +2,7 @@
 title: Contributor Setup
 slug: /contributor-getting-started
 ---
-Parcelis is a pnpm/Turbo monorepo. This guide gets the web app, API, documentation site, and local services running on your machine.
+Parcelis is a pnpm/Turbo monorepo. This guide gets the web app, API, and local services running on your machine.
 
 Existing PostgreSQL 16 development databases must follow [Upgrade PostgreSQL 16 to 18](../Deployment/upgrade-postgresql.md) before running `pnpm dev` or refreshing services. New installations use PostgreSQL 18.
 
@@ -34,8 +34,10 @@ pnpm db:seed
 pnpm dev
 ```
 
-`pnpm dev` runs the web app, API, documentation site, and React Email previews with hot reload. Docker provides nginx,
+`pnpm dev` runs the web app, API, and React Email previews with hot reload. Docker provides nginx,
 PostgreSQL, pgAdmin, MinIO, and the one-time MinIO initialization job.
+
+Documentation is maintained and deployed separately in [parcelis/parcelis-docs](https://github.com/parcelis/parcelis-docs). `pnpm dev` does not start a documentation server. Legacy application `/docs` links redirect to the hosted site.
 
 ## Local URLs
 
@@ -44,7 +46,7 @@ Use nginx as the usual entry point:
 | Service              | URL                           |
 | -------------------- | ----------------------------- |
 | Web app              | `http://localhost`            |
-| Documentation        | `http://localhost/docs/`      |
+| Documentation        | `https://docs.parcelis.dev/`      |
 | API                  | `http://localhost/api/v1`     |
 | React Email previews | `http://templates.localhost/` |
 
@@ -53,7 +55,6 @@ The apps and services are also available directly:
 | Service              | Address                                                                 |
 | -------------------- | ----------------------------------------------------------------------- |
 | Web app              | `http://localhost:30000`                                                |
-| Docs                 | `http://localhost:40000`                                                |
 | API                  | `http://localhost:40010`                                                |
 | React Email previews | `http://localhost:30001` by default; use the port printed by `pnpm dev` |
 | PostgreSQL           | `localhost:54320`                                                       |
