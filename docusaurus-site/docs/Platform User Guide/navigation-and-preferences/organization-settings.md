@@ -44,6 +44,17 @@ If you can access more than one organization, use the **Organization** selector 
 to switch workspaces. Properties, tenants, leases, invoices, maintenance, and related operational records are shown
 for the selected organization.
 
+### View organization contact information
+
+Under **Settings → Organization → General → Organizations**, select **Contact information** on an
+organization row to view its saved email, phone number, and mailing address. The panel is read-only and
+available even without permission to edit organization settings. It only shows details for organizations
+you can access.
+
+Missing fields show **Not provided**. If no contact details are configured, the panel shows
+**No contact information has been provided.** Organization administrators can update these details in
+the organization's General settings.
+
 ### API tokens
 
 Open **Settings → Organization → API tokens** to manage integration credentials for
