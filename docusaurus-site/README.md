@@ -8,7 +8,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 pnpm install --frozen-lockfile
 ```
 
-Use Node.js 22.13 or newer (Node.js 24 LTS recommended) and pnpm 12.16.1, pinned in `package.json`. The committed `pnpm-lock.yaml` is the dependency source of truth.
+Use Node.js 22.13 or newer (Node.js 24 LTS recommended) and pnpm 10.11.1, pinned in `package.json`. The committed `pnpm-lock.yaml` is the dependency source of truth.
 
 ## Local Development
 
@@ -26,6 +26,10 @@ pnpm build
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
+`future.faster` is disabled to avoid SWC native-cache permission failures in
+Cloudflare's build environment (`ERR_SWC_NATIVE_CACHE`). The other v4 settings
+remain enabled. Builds use the standard Docusaurus toolchain.
+
 ## Deployment
 
 The site is configured for `https://docs.parcelis.dev` with `baseUrl: '/'`.
@@ -39,7 +43,7 @@ In Cloudflare Pages, connect `parcelis/parcelis-docs` and use:
 | Build command | `pnpm build` |
 | Build output directory | `build` |
 | Environment variable `NODE_VERSION` | `24` |
-| Environment variable `PNPM_VERSION` | `12.16.1` |
+| Environment variable `PNPM_VERSION` | `10.11.1` |
 
 Add `docs.parcelis.dev` under the Pages project's custom domains and complete
 the DNS setup shown by Cloudflare. Connecting the repository and configuring the

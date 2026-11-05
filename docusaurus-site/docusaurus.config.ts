@@ -9,7 +9,7 @@ const config: Config = {
   title: 'Parcelis Docs',
   tagline: 'Documentation for Parcelis',
   favicon: 'img/favicon.svg',
-  future: {v4: true},
+  future: {v4: true, faster: false},
   url: 'https://docs.parcelis.dev',
   baseUrl,
   organizationName: 'parcelis',

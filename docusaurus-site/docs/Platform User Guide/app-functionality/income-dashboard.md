@@ -33,6 +33,14 @@ invoice. The form shows the subtotal, paid amount, and balance due before the in
 item names and descriptions in
 **Settings → Invoicing**. Saved invoices keep a copy of the item and description as entered.
 
+If you change any field or add a charge line, closing the drawer with **X**, **Cancel**, an outside click, or **Escape**
+shows **Your changes will not be saved.** Select **Keep Editing** to retain all entered values, or **Discard** to close
+the drawer and clear the form. Pressing **Escape** in the confirmation also keeps your edits. An untouched form, or
+one returned to its initial values, closes without a warning.
+
+The drawer stays open while invoice creation is in progress. A successful save closes and clears it; if creation
+fails, your values remain available to edit or retry, and closing still requires confirmation.
+
 ## Manage an Invoice
 
 Select an invoice identifier to open its details. The property rail groups invoices by property and unit, making it
@@ -45,7 +53,9 @@ effect of the changes before saving.
 Use **Record payment** to add the first payment, or **Add payment** when the invoice already has a payment. A fully
 paid invoice is marked **PAID**; invoices with a remaining balance are shown as open, overdue, or partially paid as
 appropriate. Use **Add note** to attach internal notes to the invoice. **Delete** permanently removes an invoice and
-its charge lines.
+its charge lines. Delete is disabled for invoices with payment history, including invoices whose
+payments have all been reversed. Reversing a payment preserves its history and does not make
+the invoice eligible for deletion.
 
 ## Income by Unit
 

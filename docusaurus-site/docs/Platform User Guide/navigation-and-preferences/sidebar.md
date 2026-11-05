@@ -23,3 +23,6 @@ Select **My Account** at the bottom of the sidebar to access account and communi
 - **Documentation Site**, **GitHub**, **Discord Community**, and **Request a feature** links.
 - **Sign out** to sign out of the current browser.
 - Theme controls at the bottom of the menu.
+
+**Report a problem** appears directly below **Request a feature** for active staff. Use it to
+[send a private bug report](./report-a-problem.md) to Parcelis maintainers. On mobile, open the navigation before opening **My Account**.
