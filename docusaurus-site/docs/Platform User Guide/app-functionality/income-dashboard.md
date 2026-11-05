@@ -54,7 +54,8 @@ Use **Record payment** to add the first payment, or **Add payment** when the inv
 paid invoice is marked **PAID**; invoices with a remaining balance are shown as open, overdue, or partially paid as
 appropriate. Use **Add note** to attach internal notes to the invoice. **Delete** permanently removes an invoice and
 its charge lines. Delete is disabled for invoices with payment history, including invoices whose
-payments have all been reversed. Reversing a payment preserves its history and does not make
+payments have all been reversed. Hover over **Delete** or move keyboard focus to the button
+to see a tooltip explaining why deletion is unavailable. Reversing a payment preserves its history and does not make
 the invoice eligible for deletion.
 
 ## Income by Unit
