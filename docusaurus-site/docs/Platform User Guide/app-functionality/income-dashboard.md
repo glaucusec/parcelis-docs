@@ -13,11 +13,20 @@ schedule, so you can review upcoming charges before a lease begins. Unpaid invoi
 
 Use the search field to find income records by property, unit, or lease status.
 
-Select **Filters** to show income for a single unit. Only units with a scheduled, active, or notice-period lease are listed,
-under their property, so units with the same name in different properties stay distinct. The summary totals and the
-table update to the selected unit, and the filter is kept in the page address as `unitId`, so a link such as
-`/income?unitId=12` opens the dashboard already filtered. Select **Clear Filters** to return to the full portfolio;
-your search and grouping stay as they were.
+Select **Filters** to narrow income by **Property** and optionally **Unit**, then select **Apply Filters**.
+Both default to **All properties** and **All units**. Choosing a property limits the Unit options to that
+property. Changing properties resets a selected unit if it belongs to another property. With All properties
+selected, units remain grouped under their property so units with the same name stay distinct. Only units
+with a scheduled, active, or notice-period lease within the current tenant scope are listed.
+
+The summary totals and both table layouts follow the property and unit selections. A property without
+eligible income leases shows an empty state. Selections are saved in the page address: `/income?propertyId=3`
+shows one property, and `/income?propertyId=3&unitId=12` narrows it to one unit. Existing unit-only links such as
+`/income?unitId=12` continue to work. A property/unit combination that does not match shows no income results.
+
+Select **Clear Filters** to remove both property and unit selections. Your search, grouping, and other URL
+parameters stay as they were. If the page was opened with a `tenantId` restriction, a notice identifies the
+tenant scope; clearing property and unit filters keeps that restriction and its notice visible.
 
 ## Manual Invoices
 
