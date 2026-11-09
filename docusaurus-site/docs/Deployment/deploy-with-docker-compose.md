@@ -133,13 +133,24 @@ The NextAuth upgrade removes the database `Session` table. Previous application 
 
 Back up PostgreSQL, remove all application replicas from your load balancer, and wait for in-flight requests to finish. Stop every old application and worker instance, including instances on other hosts, before running the migration. Keep PostgreSQL, Redis, and object storage running.
 
-Until all images required by the selected Compose file are available as described above, use the local-build upgrade sequence below. Once they are available:
+For published images, set `PARCELIS_IMAGE_TAG` to the exact published release tag matching `PARCELIS_REF`, rather than `latest`. Pull that tag for every Parcelis image referenced as `latest` by the selected Compose file, then retag each image locally for Compose. This includes `parcelis/docs` only when `docs-service` is present. If matching release tags are unavailable, use the local-build upgrade sequence below. Do not run a general `docker compose pull` after retagging.
 
 ```bash
-docker compose --env-file .env.production pull
+PARCELIS_IMAGE_TAG='<published-release-tag>'
+parcelis_images=$(docker compose --env-file .env.production config --images) || exit 1
+for image in $(printf '%s\n' "$parcelis_images" | sort -u); do
+  case "$image" in
+    parcelis/*:latest)
+      release_image="${image%:latest}:${PARCELIS_IMAGE_TAG}"
+      docker pull "$release_image" || exit 1
+      docker tag "$release_image" "$image" || exit 1
+      ;;
+  esac
+done
+docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
 docker compose --env-file .env.production stop app-service worker-service
-docker compose --env-file .env.production run --rm --no-deps migrate-service
-docker compose --env-file .env.production up -d --remove-orphans
+docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```
 
 For locally built application images, use the same maintenance ordering and pull only infrastructure images:
