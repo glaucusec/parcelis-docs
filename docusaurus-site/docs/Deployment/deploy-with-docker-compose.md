@@ -27,7 +27,7 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.e
 
 Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
-Until `parcelis/worker:latest` and matching `parcelis/apps:latest` and `parcelis/proxy:latest` images from that revision are published, use the local-build steps below. Do not use the general `docker compose pull` commands until all three matching images are available.
+Use the general `docker compose pull` commands only when all images required by the selected Compose file are available. This includes `parcelis/worker:latest` and matching `parcelis/apps:latest` and `parcelis/proxy:latest` images from that revision. If the selected Compose file includes `docs-service`, the matching `parcelis/docs:latest` image must also be published; it is not required when `docs-service` is absent. Until then, use the local-build steps below.
 
 For local builds, run these commands from the application checkout at the selected commit. Build every application image with the `latest` tag, including the worker:
 
@@ -59,7 +59,7 @@ docker compose --env-file .env.production up -d --pull never --remove-orphans
 
 Skip the general `pull` command below when using local builds: it would replace your local `latest` images with published images. The optional single-image stack instead uses `parcelis/parcelis` for both application and worker; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
-Only after the worker and matching application images are published, pull and start the stack:
+Only after all images required by the selected Compose file are available as described above, pull and start the stack:
 
 ```bash
 docker compose --env-file .env.production pull
@@ -133,7 +133,7 @@ The NextAuth upgrade removes the database `Session` table. Previous application 
 
 Back up PostgreSQL, remove all application replicas from your load balancer, and wait for in-flight requests to finish. Stop every old application and worker instance, including instances on other hosts, before running the migration. Keep PostgreSQL, Redis, and object storage running.
 
-Until the worker and matching application images are published, use the local-build upgrade sequence below. Once all matching images are published:
+Until all images required by the selected Compose file are available as described above, use the local-build upgrade sequence below. Once they are available:
 
 ```bash
 docker compose --env-file .env.production pull
