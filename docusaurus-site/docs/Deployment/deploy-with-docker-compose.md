@@ -27,6 +27,8 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.e
 
 Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
+Until `parcelis/worker:latest` and matching `parcelis/apps:latest` and `parcelis/proxy:latest` images from that revision are published, use the local-build steps below. Do not use the general `docker compose pull` commands until all three matching images are available.
+
 For local builds, run these commands from the application checkout at the selected commit. Build every application image with the `latest` tag, including the worker:
 
 ```bash
@@ -41,7 +43,14 @@ If the selected Compose file includes `docs-service`, also build its image from 
 docker build --target nginx -f apps/docs/Dockerfile -t parcelis/docs:latest .
 ```
 
-Pull only the infrastructure images, then start the locally built application images without pulling replacements:
+For a new installation, configure the environment file before starting the stack. Existing deployments must retain their saved `.env.production` and secrets.
+
+```bash
+cp .env.production.example .env.production
+# edit .env.production with your production values
+```
+
+For a new installation using local builds, pull only the infrastructure images, then start the locally built application images without pulling replacements. For existing deployments, follow [Upgrading an existing deployment](#upgrading-an-existing-deployment) instead:
 
 ```bash
 docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
@@ -50,12 +59,9 @@ docker compose --env-file .env.production up -d --pull never --remove-orphans
 
 Skip the general `pull` command below when using local builds: it would replace your local `latest` images with published images. The optional single-image stack instead uses `parcelis/parcelis` for both application and worker; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
-For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
+Only after the worker and matching application images are published, pull and start the stack:
 
 ```bash
-cp .env.production.example .env.production
-# edit .env.production with your production values
-
 docker compose --env-file .env.production pull
 docker compose --env-file .env.production up -d --remove-orphans
 ```
@@ -127,11 +133,22 @@ The NextAuth upgrade removes the database `Session` table. Previous application 
 
 Back up PostgreSQL, remove all application replicas from your load balancer, and wait for in-flight requests to finish. Stop every old application and worker instance, including instances on other hosts, before running the migration. Keep PostgreSQL, Redis, and object storage running.
 
+Until the worker and matching application images are published, use the local-build upgrade sequence below. Once all matching images are published:
+
 ```bash
 docker compose --env-file .env.production pull
 docker compose --env-file .env.production stop app-service worker-service
 docker compose --env-file .env.production run --rm --no-deps migrate-service
 docker compose --env-file .env.production up -d --remove-orphans
+```
+
+For locally built application images, use the same maintenance ordering and pull only infrastructure images:
+
+```bash
+docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
+docker compose --env-file .env.production stop app-service worker-service
+docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```
 
 If migration fails, keep application traffic disabled until the failure is resolved. After the new application passes health checks, restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup.

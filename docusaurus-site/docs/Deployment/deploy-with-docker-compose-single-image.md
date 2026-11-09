@@ -35,15 +35,6 @@ To use a local application build, build from the selected application checkout:
 docker build --target single-image -f Dockerfile.app -t parcelis/parcelis:latest .
 ```
 
-For local Compose startup, pull only infrastructure images and keep the application and worker on this local `latest` build:
-
-```bash
-docker compose --env-file .env.production -f docker-compose-single-image.yml pull postgres-service redis-service minio-service minio-init-service
-docker compose --env-file .env.production -f docker-compose-single-image.yml up -d --pull never --remove-orphans
-```
-
-Skip the general `pull` command below when using local builds: it would replace your local application image with the published image.
-
 ## Required environment variables
 
 The single application image expects the same environment variables as the modular `parcelis/apps` service:
@@ -120,12 +111,25 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.e
 
 Replace the placeholder before running these commands. The application, migration, and worker services all use `parcelis/parcelis:latest`. The worker still runs in a separate container from that same image. For a local build, tag it `parcelis/parcelis:latest` and skip `pull` below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18). Older releases require their matching deployment files.
 
-For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
+For a new installation, configure the environment file before starting the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
 ```bash
 cp .env.production.example .env.production
 # edit .env.production with your production values
+```
 
+For local Compose startup, pull only infrastructure images and keep the application and worker on this local `latest` build:
+
+```bash
+docker compose --env-file .env.production -f docker-compose-single-image.yml pull postgres-service redis-service minio-service minio-init-service
+docker compose --env-file .env.production -f docker-compose-single-image.yml up -d --pull never --remove-orphans
+```
+
+Skip the general `pull` command below when using local builds: it would replace your local application image with the published image.
+
+For published application images, pull and start the stack:
+
+```bash
 docker compose --env-file .env.production -f docker-compose-single-image.yml pull
 docker compose --env-file .env.production -f docker-compose-single-image.yml up -d --remove-orphans
 ```
