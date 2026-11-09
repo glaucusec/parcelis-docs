@@ -17,6 +17,28 @@ The web app and API run as separate processes. Browsers use the web origin's
 `/trpc` paths; the development and deployment proxies forward those requests to
 the API. Background workers run independently of API request handlers.
 
+## Docker runtime images
+
+The modular stack uses `parcelis/apps:latest` for the web, API, and internal nginx,
+and `parcelis/worker:latest` for background processing. The separate proxy image
+forwards application traffic to the app container; internal nginx then selects
+the web or API process. The worker image split does not change this routing.
+
+`Dockerfile.app` reuses its existing `worker-build` stage for an independent
+`worker` runtime target. It contains the compiled worker and shared database,
+email, and jobs packages with production dependencies. It excludes the web/API
+builds, docs, nginx, and Supervisor. Node runs directly so it receives shutdown
+signals; modular Compose allows 25 seconds before forced termination. The worker
+handles outbox dispatch, account-email delivery, scheduled lease changes, retries,
+and recovery. Existing Redis heartbeats and canary jobs report processing health;
+the image has no web HTTP health check.
+
+The `single-image` target retains its bundled worker. Its application, migration,
+and worker containers all use `parcelis/parcelis:latest`; its worker container
+starts with `pnpm --filter @parcelis/worker start`. It does not require the dedicated
+worker image. Both deployment Compose files use `latest` for Parcelis application
+images and no longer read `PARCELIS_VERSION`.
+
 ## API routes
 
 | Path             | Purpose                                                           |

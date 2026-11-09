@@ -25,23 +25,43 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. Set the required `PARCELIS_VERSION` in `.env.production` to a release image tag that includes the documentation removal, or the tag assigned to locally built images from the selected commit. Older releases such as `v0.4.1` and `v0.9.0` require their matching deployment files and documentation service. This value is a tag only, such as `local-abc123`, not a full image reference. Both images—`parcelis/apps` and `parcelis/proxy`—must be available with that same tag. For locally built images, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
+Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
-Until a compatible release is published, build the two modular images from a checkout containing the documentation removal:
+Use the general `docker compose pull` commands only when all images required by the selected Compose file are available. This includes `parcelis/worker:latest` and matching `parcelis/apps:latest` and `parcelis/proxy:latest` images from that revision. If the selected Compose file includes `docs-service`, the matching `parcelis/docs:latest` image must also be published; it is not required when `docs-service` is absent. Until then, use the local-build steps below.
+
+For local builds, run these commands from the application checkout at the selected commit. Build every application image with the `latest` tag, including the worker:
 
 ```bash
-docker build --target app -f Dockerfile.app -t parcelis/apps:local-docs-independent .
-docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:local-docs-independent .
+docker build --target app -f Dockerfile.app -t parcelis/apps:latest .
+docker build --target worker -f Dockerfile.app -t parcelis/worker:latest .
+docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:latest .
 ```
 
-Set `PARCELIS_VERSION=local-docs-independent` in `.env.production` and skip `pull` for these local images. The optional single-image stack instead uses `parcelis/parcelis`; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+If the selected Compose file includes `docs-service`, also build its image from that checkout:
 
-For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
+```bash
+docker build --target nginx -f apps/docs/Dockerfile -t parcelis/docs:latest .
+```
+
+For a new installation, configure the environment file before starting the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
 ```bash
 cp .env.production.example .env.production
 # edit .env.production with your production values
+```
 
+For a new installation using local builds, pull only the infrastructure images, then start the locally built application images without pulling replacements. For existing deployments, follow [Upgrading an existing deployment](#upgrading-an-existing-deployment) instead:
+
+```bash
+docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
+```
+
+Skip the general `pull` command below when using local builds: it would replace your local `latest` images with published images. The optional single-image stack instead uses `parcelis/parcelis` for both application and worker; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+
+Only after all images required by the selected Compose file are available as described above, pull and start the stack:
+
+```bash
 docker compose --env-file .env.production pull
 docker compose --env-file .env.production up -d --remove-orphans
 ```
@@ -57,19 +77,30 @@ If you are planning to run Parcelis in a production environment, update the valu
 
 Password reset links use the SMTP values in `.env.production` until an organization has saved its own SMTP configuration. Set `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASSWORD` for this fallback configuration. `SMTP_SECURE` must be `true` or `false`; use `true` for implicit TLS (commonly port 465). Organization administrators can reset their saved SMTP configuration in Settings → Organization → Email to return to these deployment settings. See [Email configuration](email-configuration.md) for the full `.env` reference.
 
-Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before saving organization SMTP passwords. Keep this value stable and available to every app instance; changing it prevents the app from decrypting existing organization SMTP passwords.
+Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before saving organization SMTP passwords. Keep this value stable and available to every API and worker instance; changing it prevents the app from decrypting existing organization SMTP passwords.
 
 ## What the stack does
 
 - `migrate` runs Prisma migrations before the app starts
 - `minio-init` creates the object-storage buckets and uploads public brand assets
 - `app` serves the web UI and API
+- `worker` uses the dedicated `parcelis/worker` image to dispatch outbox events and process jobs
 
 ## API runtime
 
 The application container runs the Next.js web app and a separate Next.js API
 process behind nginx. Background jobs run in the worker service; PostgreSQL, Redis,
 and MinIO provide the database, queues, and object storage.
+
+The modular app image excludes the worker. Build `parcelis/worker` with the
+`worker` target in the same `Dockerfile.app`; this target builds only the worker
+and its shared packages. It starts Node directly, has no web HTTP health check,
+and reports readiness through Redis heartbeats and canary jobs in the
+[status monitor](status-monitor.md). A running container alone does not confirm job
+processing. Compose waits for successful migrations and healthy Redis, exposes no
+worker port, and allows 25 seconds for graceful shutdown. Keep the app and worker
+on the `latest` tag. The single-image stack continues to bundle the worker in
+`parcelis/parcelis` and does not require `parcelis/worker`.
 
 The supplied `.env.production.example` sets `API_TRUST_PROXY_HOPS` to `2` for the
 two nginx proxies in this stack. Keep this value only when API traffic exclusively
@@ -102,11 +133,33 @@ The NextAuth upgrade removes the database `Session` table. Previous application 
 
 Back up PostgreSQL, remove all application replicas from your load balancer, and wait for in-flight requests to finish. Stop every old application and worker instance, including instances on other hosts, before running the migration. Keep PostgreSQL, Redis, and object storage running.
 
+For published images, set `PARCELIS_IMAGE_TAG` to the exact published release tag matching `PARCELIS_REF`, rather than `latest`. Pull that tag for every Parcelis image referenced as `latest` by the selected Compose file, then retag each image locally for Compose. This includes `parcelis/docs` only when `docs-service` is present. If matching release tags are unavailable, use the local-build upgrade sequence below. Do not run a general `docker compose pull` after retagging.
+
 ```bash
-docker compose --env-file .env.production pull
+PARCELIS_IMAGE_TAG='<published-release-tag>'
+parcelis_images=$(docker compose --env-file .env.production config --images) || exit 1
+for image in $(printf '%s\n' "$parcelis_images" | sort -u); do
+  case "$image" in
+    parcelis/*:latest)
+      release_image="${image%:latest}:${PARCELIS_IMAGE_TAG}"
+      docker pull "$release_image" || exit 1
+      docker tag "$release_image" "$image" || exit 1
+      ;;
+  esac
+done
+docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
 docker compose --env-file .env.production stop app-service worker-service
-docker compose --env-file .env.production run --rm --no-deps migrate-service
-docker compose --env-file .env.production up -d --remove-orphans
+docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
+```
+
+For locally built application images, use the same maintenance ordering and pull only infrastructure images:
+
+```bash
+docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
+docker compose --env-file .env.production stop app-service worker-service
+docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```
 
 If migration fails, keep application traffic disabled until the failure is resolved. After the new application passes health checks, restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup.
