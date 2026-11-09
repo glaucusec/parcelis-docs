@@ -25,16 +25,17 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. Set the required `PARCELIS_VERSION` in `.env.production` to a release image tag that includes the documentation removal, or the tag assigned to locally built images from the selected commit. Older releases such as `v0.4.1` and `v0.9.0` require their matching deployment files and documentation service. This value is a tag only, such as `local-abc123`, not a full image reference. Both images—`parcelis/apps` and `parcelis/proxy`—must be available with that same tag. For locally built images, skip the `pull` command below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18); do not mix tagged deployment files with downloads from `main`.
+Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
-Until a compatible release is published, build the two modular images from a checkout containing the documentation removal:
+Before the dedicated worker image is published, build the modular images from a checkout containing the worker changes:
 
 ```bash
-docker build --target app -f Dockerfile.app -t parcelis/apps:local-docs-independent .
-docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:local-docs-independent .
+docker build --target app -f Dockerfile.app -t parcelis/apps:latest .
+docker build --target worker -f Dockerfile.app -t parcelis/worker:latest .
+docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:latest .
 ```
 
-Set `PARCELIS_VERSION=local-docs-independent` in `.env.production` and skip `pull` for these local images. The optional single-image stack instead uses `parcelis/parcelis`; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+If the selected Compose file includes `docs-service`, also build `parcelis/docs:latest` with `docker build --target nginx -f apps/docs/Dockerfile -t parcelis/docs:latest .`. Skip `pull` when using local builds so it does not replace them with published images. The optional single-image stack instead uses `parcelis/parcelis`; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
 For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
@@ -57,19 +58,30 @@ If you are planning to run Parcelis in a production environment, update the valu
 
 Password reset links use the SMTP values in `.env.production` until an organization has saved its own SMTP configuration. Set `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASSWORD` for this fallback configuration. `SMTP_SECURE` must be `true` or `false`; use `true` for implicit TLS (commonly port 465). Organization administrators can reset their saved SMTP configuration in Settings → Organization → Email to return to these deployment settings. See [Email configuration](email-configuration.md) for the full `.env` reference.
 
-Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before saving organization SMTP passwords. Keep this value stable and available to every app instance; changing it prevents the app from decrypting existing organization SMTP passwords.
+Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before saving organization SMTP passwords. Keep this value stable and available to every API and worker instance; changing it prevents the app from decrypting existing organization SMTP passwords.
 
 ## What the stack does
 
 - `migrate` runs Prisma migrations before the app starts
 - `minio-init` creates the object-storage buckets and uploads public brand assets
 - `app` serves the web UI and API
+- `worker` uses the dedicated `parcelis/worker` image to dispatch outbox events and process jobs
 
 ## API runtime
 
 The application container runs the Next.js web app and a separate Next.js API
 process behind nginx. Background jobs run in the worker service; PostgreSQL, Redis,
 and MinIO provide the database, queues, and object storage.
+
+The modular app image excludes the worker. Build `parcelis/worker` with the
+`worker` target in the same `Dockerfile.app`; this target builds only the worker
+and its shared packages. It starts Node directly, has no web HTTP health check,
+and reports readiness through Redis heartbeats and canary jobs in the
+[status monitor](status-monitor.md). A running container alone does not confirm job
+processing. Compose waits for successful migrations and healthy Redis, exposes no
+worker port, and allows 25 seconds for graceful shutdown. Keep the app and worker
+on the `latest` tag. The single-image stack continues to bundle the worker in
+`parcelis/parcelis` and does not require `parcelis/worker`.
 
 The supplied `.env.production.example` sets `API_TRUST_PROXY_HOPS` to `2` for the
 two nginx proxies in this stack. Keep this value only when API traffic exclusively

@@ -2,7 +2,7 @@
 title: Deploy with Docker
 slug: /deploy-with-docker
 ---
-Parcelis ships published container images for the application. The simplest way to run the platform is to use Docker directly when you already have PostgreSQL and S3-compatible storage services available.
+Parcelis ships published container images for the application. The simplest way to run the platform is to use Docker directly when you already have PostgreSQL, Redis, and S3-compatible storage services available.
 
 :::danger
 **Existing PostgreSQL 16 installations**
@@ -19,6 +19,8 @@ To run Parcelis with Docker, the minimum requirements are simply those required 
 
 Generate `NEXTAUTH_SECRET` once with `openssl rand -base64 32` and save it in your deployment's secret store. Export that saved value before running the command below. Reuse it on every restart, redeploy, and replica; changing it invalidates existing sessions.
 
+The examples use `latest`, matching the supplied Compose files. Apply database migrations before starting either the application or worker. Older releases require their matching deployment instructions.
+
 Start the web app container with the required environment variables:
 
 ```bash
@@ -28,6 +30,10 @@ docker run -d --name parcelis-app \
   -e WEB_ORIGIN=https://parcelis.example.com \
   -e NEXTAUTH_URL=https://parcelis.example.com \
   -e NEXTAUTH_SECRET="${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET to your saved deployment secret}" \
+  -e REDIS_HOST=redis \
+  -e REDIS_PORT=6379 \
+  -e REDIS_PASSWORD=your-redis-password \
+  -e EMAIL_SETTINGS_ENCRYPTION_KEY=your-base64-32-byte-key \
   -e EMAIL_FROM='Parcelis <no-reply@example.com>' \
   -e SMTP_HOST=smtp.example.com \
   -e SMTP_PORT=465 \
@@ -39,41 +45,65 @@ docker run -d --name parcelis-app \
   -e S3_BUCKET=parcelis-images \
   -e S3_ACCESS_KEY_ID=your-access-key \
   -e S3_SECRET_ACCESS_KEY=your-secret-key \
-  parcelis/apps:v0.4.1
+  parcelis/apps:latest
 ```
 
-The published documentation image is designed to be mounted at `/docs/` by the nginx proxy. Use the production Compose stack when serving the application together.
+The modular app image contains the web and API processes. Background jobs require the separate worker described below. The production Compose stack starts these services and their dependencies together.
 
 ```bash
 docker compose --env-file .env.production up -d
 ```
 
-For a single-image deployment that bundles the web app, API, worker, and nginx routing into one container, see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+For a single-image deployment that bundles the web app, API, worker, and nginx routing into one image, with a separate worker container using that same image, see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
 :::warning
 If you are planning to run Parcelis in a production environment, update the values for the database, object storage, and authentication settings before you expose the service publicly. Use strong, unique credentials and keep them out of shell history and version control.
 :::
+
+## Background worker
+
+The modular application image excludes the worker. Start the dedicated worker on the same Docker network as PostgreSQL and Redis, using the saved email settings from the app. Add `--network` with that network's name to the examples when using container hostnames. Export the saved database, Redis, and email settings before starting the worker:
+
+```bash
+docker run -d --name parcelis-worker --stop-timeout 25 \
+  -e DATABASE_URL="$DATABASE_URL" \
+  -e REDIS_HOST="$REDIS_HOST" \
+  -e REDIS_PORT="${REDIS_PORT:-6379}" \
+  -e REDIS_PASSWORD="$REDIS_PASSWORD" \
+  -e EMAIL_FROM="$EMAIL_FROM" \
+  -e SMTP_HOST="$SMTP_HOST" \
+  -e SMTP_PORT="$SMTP_PORT" \
+  -e SMTP_SECURE="$SMTP_SECURE" \
+  -e SMTP_USER="$SMTP_USER" \
+  -e SMTP_PASSWORD="$SMTP_PASSWORD" \
+  -e EMAIL_SETTINGS_ENCRYPTION_KEY="$EMAIL_SETTINGS_ENCRYPTION_KEY" \
+  parcelis/worker:latest
+```
+
+Apply database migrations before starting either container. The worker starts Node directly, exposes no public port, and reports readiness through Redis heartbeats and canary jobs in the [status monitor](status-monitor.md). A running container alone does not confirm job processing. Keep `EMAIL_SETTINGS_ENCRYPTION_KEY` identical to the API's saved key. It has no web HTTP health check. The single-image deployment runs its worker container from `parcelis/parcelis:latest` with `pnpm --filter @parcelis/worker start`.
+
 ## Upgrading an existing deployment
 
 The NextAuth upgrade removes the database `Session` table. Previous application instances still query it, so use a maintenance window. Back up PostgreSQL, drain traffic from every application replica, and wait for in-flight requests to finish. Stop `parcelis-app` and every other old application and worker instance before applying migrations. Keep PostgreSQL, Redis, and object storage running.
 
-Pull the new image, then run migrations from that image with your production database connection:
+Pull `parcelis/apps:latest` and `parcelis/worker:latest`, then run migrations from the application image with your production database connection:
 
 ```bash
 docker run --rm \
   -e DATABASE_URL="$DATABASE_URL" \
   -w /repo \
-  parcelis/apps:v0.4.1 \
+  parcelis/apps:latest \
   pnpm --filter @parcelis/db exec prisma migrate deploy --schema prisma/schema.prisma
 ```
 
-Use the same Docker network as your database when needed. If migration fails, keep traffic disabled until the failure is resolved. Recreate the application and worker containers from the new image with the saved environment settings, verify their health, then restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup. For Compose, follow the [Compose upgrade sequence](deploy-with-docker-compose.md#upgrading-an-existing-deployment).
+Use the same Docker network as your database when needed. If migration fails, keep traffic disabled until the failure is resolved. Recreate the application and worker containers from their matching new images with the saved environment settings, verify their health, then restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup. For Compose, follow the [Compose upgrade sequence](deploy-with-docker-compose.md#upgrading-an-existing-deployment).
 
 ## Required environment variables
 
 The app container expects the following values at minimum:
 
 - `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_HOST`, `REDIS_PORT`, and `REDIS_PASSWORD`: authenticated Redis connection for background jobs
 - `WEB_ORIGIN`: the public origin used by the web app
 - `NEXTAUTH_URL`: the public Parcelis origin, including HTTPS
 - `NEXTAUTH_SECRET`: a private value generated once with `openssl rand -base64 32`, persisted across redeploys and shared across API instances
