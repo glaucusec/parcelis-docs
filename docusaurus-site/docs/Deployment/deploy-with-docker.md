@@ -19,7 +19,7 @@ To run Parcelis with Docker, the minimum requirements are simply those required 
 
 Generate `NEXTAUTH_SECRET` once with `openssl rand -base64 32` and save it in your deployment's secret store. Export that saved value before running the command below. Reuse it on every restart, redeploy, and replica; changing it invalidates existing sessions.
 
-The standalone examples use `latest`, matching the Compose default. Compose deployments can set `PARCELIS_VERSION` to select a release or local tag; standalone Docker commands must use that same tag explicitly when selecting a different build. Apply database migrations before starting either the application or worker. Older releases require their matching deployment instructions.
+The examples use `latest`, matching the supplied Compose files. Apply database migrations before starting either the application or worker. Older releases require their matching deployment instructions.
 
 Start the web app container with the required environment variables:
 

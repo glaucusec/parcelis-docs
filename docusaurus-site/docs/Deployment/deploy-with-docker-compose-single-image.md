@@ -23,7 +23,7 @@ Use the modular [Docker Compose stack](deploy-with-docker-compose.md#setting-up-
 
 ## Image name and tags
 
-The deployment Compose file uses `parcelis/parcelis:${PARCELIS_VERSION:-latest}`. Set `PARCELIS_VERSION` in `.env.production` to select a release or local build. An unset or empty value defaults to `latest`; the standalone Docker examples below use that default.
+The deployment Compose file and Docker examples use `parcelis/parcelis:latest`. Release publishing also retains version tags. `PARCELIS_VERSION` is no longer used by the supplied Compose file; remove it from an existing environment file.
 
 | Image               | Tag examples       |
 | ------------------- | ------------------ |
@@ -32,16 +32,17 @@ The deployment Compose file uses `parcelis/parcelis:${PARCELIS_VERSION:-latest}`
 To use a local application build, build from the selected application checkout:
 
 ```bash
-export PARCELIS_VERSION=local-worker
-docker build --target single-image -f Dockerfile.app -t "parcelis/parcelis:${PARCELIS_VERSION}" .
+docker build --target single-image -f Dockerfile.app -t parcelis/parcelis:latest .
 ```
 
-The exported tag overrides `.env.production`. For local Compose startup, pull only infrastructure images and keep the application and worker on the local build:
+For local Compose startup, pull only infrastructure images and keep the application and worker on this local `latest` build:
 
 ```bash
 docker compose --env-file .env.production -f docker-compose-single-image.yml pull postgres-service redis-service minio-service minio-init-service
 docker compose --env-file .env.production -f docker-compose-single-image.yml up -d --pull never --remove-orphans
 ```
+
+Skip the general `pull` command below when using local builds: it would replace your local application image with the published image.
 
 ## Required environment variables
 
@@ -117,7 +118,7 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. The application, migration, and worker services all use `parcelis/parcelis` with the tag selected by `PARCELIS_VERSION`, defaulting to `latest`. The worker still runs in a separate container from that same image. For a local build, use the exported local tag and `--pull never` startup above instead of `pull` below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18). Older releases require their matching deployment files.
+Replace the placeholder before running these commands. The application, migration, and worker services all use `parcelis/parcelis:latest`. The worker still runs in a separate container from that same image. For a local build, tag it `parcelis/parcelis:latest` and skip `pull` below. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18). Older releases require their matching deployment files.
 
 For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
 

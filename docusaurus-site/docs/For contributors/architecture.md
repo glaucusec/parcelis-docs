@@ -36,9 +36,8 @@ the image has no web HTTP health check.
 The `single-image` target retains its bundled worker. Its application, migration,
 and worker containers all use `parcelis/parcelis:latest`; its worker container
 starts with `pnpm --filter @parcelis/worker start`. It does not require the dedicated
-worker image. Both deployment Compose files select Parcelis application image tags through
-`PARCELIS_VERSION`, defaulting to `latest` when unset or empty. The selected tag
-also applies to the worker and migration containers.
+worker image. Both deployment Compose files use `latest` for Parcelis application
+images and no longer read `PARCELIS_VERSION`.
 
 ## API routes
 

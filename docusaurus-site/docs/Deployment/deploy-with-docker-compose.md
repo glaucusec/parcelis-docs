@@ -25,21 +25,20 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. The updated Compose file selects Parcelis application image tags through `PARCELIS_VERSION`, defaulting to `latest` when unset or empty. Set it in `.env.production` to select a release or locally built tag, including for the worker. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
+Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
-For local builds, run these commands from the application checkout at the selected commit. Build every application image with the same local tag, including the worker:
+For local builds, run these commands from the application checkout at the selected commit. Build every application image with the `latest` tag, including the worker:
 
 ```bash
-export PARCELIS_VERSION=local-worker
-docker build --target app -f Dockerfile.app -t "parcelis/apps:${PARCELIS_VERSION}" .
-docker build --target worker -f Dockerfile.app -t "parcelis/worker:${PARCELIS_VERSION}" .
-docker build --target proxy -f infra/docker/proxy/Dockerfile -t "parcelis/proxy:${PARCELIS_VERSION}" .
+docker build --target app -f Dockerfile.app -t parcelis/apps:latest .
+docker build --target worker -f Dockerfile.app -t parcelis/worker:latest .
+docker build --target proxy -f infra/docker/proxy/Dockerfile -t parcelis/proxy:latest .
 ```
 
 If the selected Compose file includes `docs-service`, also build its image from that checkout:
 
 ```bash
-docker build --target nginx -f apps/docs/Dockerfile -t "parcelis/docs:${PARCELIS_VERSION}" .
+docker build --target nginx -f apps/docs/Dockerfile -t parcelis/docs:latest .
 ```
 
 Pull only the infrastructure images, then start the locally built application images without pulling replacements:
@@ -49,7 +48,7 @@ docker compose --env-file .env.production pull postgres-service redis-service mi
 docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```
 
-The exported `PARCELIS_VERSION` overrides `.env.production`. Skip the general `pull` command below when using local builds. The optional single-image stack instead uses `parcelis/parcelis` for both application and worker; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
+Skip the general `pull` command below when using local builds: it would replace your local `latest` images with published images. The optional single-image stack instead uses `parcelis/parcelis` for both application and worker; see [Deploy with the Single-Image Docker Build](deploy-with-docker-compose-single-image.md).
 
 For a new installation, configure the environment file and start the stack. Existing deployments must retain their saved `.env.production` and secrets.
 
@@ -94,7 +93,7 @@ and reports readiness through Redis heartbeats and canary jobs in the
 [status monitor](status-monitor.md). A running container alone does not confirm job
 processing. Compose waits for successful migrations and healthy Redis, exposes no
 worker port, and allows 25 seconds for graceful shutdown. Keep the app and worker
-on the same selected tag. The single-image stack continues to bundle the worker in
+on the `latest` tag. The single-image stack continues to bundle the worker in
 `parcelis/parcelis` and does not require `parcelis/worker`.
 
 The supplied `.env.production.example` sets `API_TRUST_PROXY_HOPS` to `2` for the
