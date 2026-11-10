@@ -19,10 +19,39 @@ the API. Background workers run independently of API request handlers.
 
 ## Docker runtime images
 
-The modular stack uses `parcelis/apps:latest` for the web, API, and internal nginx,
-and `parcelis/worker:latest` for background processing. The separate proxy image
-forwards application traffic to the app container; internal nginx then selects
-the web or API process. The worker image split does not change this routing.
+The modular stack uses `parcelis/apps:latest` for web and API processes managed by
+Supervisor. Nginx runs only in the separate `parcelis/proxy` image, which routes directly
+to `app-service:3001` for web and `app-service:4000` for API, tRPC, and the job dashboard.
+`/healthz` forwards to API health. Documentation routing follows the selected proxy
+configuration; when `docs-service` is present, `/docs/` reaches that container.
+
+```mermaid
+flowchart LR
+    Browser --> Proxy[Proxy nginx]
+    subgraph Apps[Apps container]
+        Web[Web: port 3001]
+        API[API: port 4000]
+    end
+    Proxy --> Web
+    Proxy --> API
+```
+
+The app binds both listeners to the container network, and the supplied modular Compose
+file publishes only the proxy HTTP port. The app health check requests both processes
+directly; the proxy checks routed web/API responses and waits for app health before startup.
+These are HTTP liveness and routing checks, not full dependency readiness.
+
+`API_INTERNAL_PORT` defaults to `4000`; custom modular builds must pass the same argument
+to app and proxy. Both application targets set `API_INTERNAL_URL` to the matching loopback
+API address so web middleware can validate organization access. Modular API requests now
+pass through one nginx hop. The supplied production environment and Compose configuration
+use `API_TRUST_PROXY_HOPS=1`; existing deployments must update a saved value of `2` for this
+path. Additional trusted proxies require a count matching the actual topology.
+
+The optional single-image target retains bundled nginx on port `3000` and its own Supervisor
+configuration with loopback web/API listeners. The [deployment guide](../Deployment/deploy-with-docker-compose.md#moving-to-direct-proxy-routing)
+explains paired app/proxy upgrades and rollback. Background processing remains in the
+existing `parcelis/worker:latest` image.
 
 `Dockerfile.app` reuses its existing `worker-build` stage for an independent
 `worker` runtime target. It contains the compiled worker and shared database,
