@@ -19,16 +19,30 @@ To run Parcelis with Docker, the minimum requirements are simply those required 
 
 Generate `NEXTAUTH_SECRET` once with `openssl rand -base64 32` and save it in your deployment's secret store. Export that saved value before running the command below. Reuse it on every restart, redeploy, and replica; changing it invalidates existing sessions.
 
-The examples use `latest`, matching the supplied Compose files. Apply database migrations before starting either the application or worker. Older releases require their matching deployment instructions.
+The examples use `latest`, matching the supplied Compose files. Use compatible app and proxy
+images from the same application revision; the direct-routing layout is introduced by
+[application PR #582](https://github.com/parcelis/parcelis/pull/582). Build them locally when
+matching published images are unavailable. Apply any required database migrations before
+starting application services. Older releases require their matching deployment instructions.
 
-Start the web app container with the required environment variables:
+The modular app no longer contains nginx or serves a combined endpoint on port `3000`.
+The separate proxy routes to web on `3001` and API on `4000`. Use the
+[Compose guide](deploy-with-docker-compose.md) to provision the complete stack, or attach
+all containers to an existing user-defined Docker network with access to PostgreSQL and
+Redis. The examples call that network `parcelis`; create it once if needed:
 
 ```bash
-docker run -d --name parcelis-app \
-  -p 3000:3000 \
+docker network create parcelis
+```
+
+Start the app with the `app-service` network alias expected by the proxy. Do not publish its web or API ports to the host:
+
+```bash
+docker run -d --name parcelis-app --network parcelis --network-alias app-service --stop-timeout 25 \
   -e DATABASE_URL=postgresql://parcelis:parcelis@postgres:5432/parcelis?schema=public \
   -e WEB_ORIGIN=https://parcelis.example.com \
   -e NEXTAUTH_URL=https://parcelis.example.com \
+  -e API_TRUST_PROXY_HOPS=1 \
   -e NEXTAUTH_SECRET="${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET to your saved deployment secret}" \
   -e REDIS_HOST=redis \
   -e REDIS_PORT=6379 \
@@ -48,7 +62,29 @@ docker run -d --name parcelis-app \
   parcelis/apps:latest
 ```
 
-The modular app image contains the web and API processes. Background jobs require the separate worker described below. The production Compose stack starts these services and their dependencies together.
+For a proxy configuration that forwards `/docs/` to `docs-service`, including the configuration
+in PR #582, start the matching documentation container on the same network:
+
+```bash
+docker run -d --name parcelis-docs --network parcelis --network-alias docs-service parcelis/docs:latest
+```
+
+A proxy build that redirects documentation URLs to the hosted documentation site does not
+need that container. Check the configuration in the selected application revision.
+
+Wait for `parcelis-app` to report healthy, then start the proxy as the public entry point:
+
+```bash
+docker run -d --name parcelis-proxy --network parcelis -p 3000:80 parcelis/proxy:latest
+```
+
+The proxy routes `/` to web, `/api/*`, `/trpc/*`, and `/admin/jobs/*` to API, and `/healthz`
+to API health. Its health check covers both web and API routing. Generated redirects remain
+relative so externally mapped ports are preserved. Set public origin variables for the
+browser-facing address and configure TLS termination for HTTPS.
+
+Background jobs require the separate worker described below. The production Compose stack
+starts these services and dependencies together:
 
 ```bash
 docker compose --env-file .env.production up -d
@@ -86,7 +122,7 @@ Apply database migrations before starting either container. The worker starts No
 
 The NextAuth upgrade removes the database `Session` table. Previous application instances still query it, so use a maintenance window. Back up PostgreSQL, drain traffic from every application replica, and wait for in-flight requests to finish. Stop `parcelis-app` and every other old application and worker instance before applying migrations. Keep PostgreSQL, Redis, and object storage running.
 
-Pull `parcelis/apps:latest` and `parcelis/worker:latest`, then run migrations from the application image with your production database connection:
+Obtain matching `parcelis/apps:latest` and `parcelis/proxy:latest` builds, plus the worker image when upgrading it. Stop the old app and proxy together before switching to direct routing, and set `API_TRUST_PROXY_HOPS=1` for the supplied one-proxy topology. See the [routing migration steps](deploy-with-docker-compose.md#moving-to-direct-proxy-routing). Run any applicable database migrations from the application image with your production connection:
 
 ```bash
 docker run --rm \
@@ -96,7 +132,7 @@ docker run --rm \
   pnpm --filter @parcelis/db exec prisma migrate deploy --schema prisma/schema.prisma
 ```
 
-Use the same Docker network as your database when needed. If migration fails, keep traffic disabled until the failure is resolved. Recreate the application and worker containers from their matching new images with the saved environment settings, verify their health, then restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup. For Compose, follow the [Compose upgrade sequence](deploy-with-docker-compose.md#upgrading-an-existing-deployment).
+Use the same Docker network as your database when needed. If migration fails, keep traffic disabled until the failure is resolved. Recreate the app, proxy, and any upgraded worker containers from their matching new images with the saved environment settings, verify their health, then restore traffic. Users must sign in again. The previous release cannot run against the migrated database; reverting requires restoring the pre-upgrade database backup. For Compose, follow the [Compose upgrade sequence](deploy-with-docker-compose.md#upgrading-an-existing-deployment).
 
 ## Required environment variables
 
@@ -115,8 +151,19 @@ The app container expects the following values at minimum:
 - `S3_BUCKET`: the object-storage bucket used for uploaded images
 - `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`: credentials for object storage
 
-The nginx proxy exposes the web app at `/`, legacy documentation links at `/docs/` redirecting to `https://docs.parcelis.dev/`, and
-the API at `/api/v1`.
+The nginx proxy exposes the web app at `/`, the API at `/api/v1`, and documentation according
+to the selected proxy configuration. The modular app has no public nginx endpoint.
+
+### Internal routing and proxy trust
+
+`API_TRUST_PROXY_HOPS=1` matches the supplied path from browser through one Parcelis nginx
+to API. If another trusted reverse proxy sits in front, adjust this value for that path and
+keep direct API access restricted. The API's default outside Compose is `0`.
+
+Both application targets default `API_INTERNAL_URL` to the API loopback address and configured
+port for organization-access checks. If customizing `API_INTERNAL_PORT`, build the app and
+proxy with the same argument. The [single-image build](deploy-with-docker-compose-single-image.md)
+keeps bundled nginx on `3000` and does not require the separate proxy image.
 
 ## Optional environment variables
 

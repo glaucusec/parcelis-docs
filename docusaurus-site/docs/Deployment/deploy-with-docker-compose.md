@@ -25,7 +25,7 @@ curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/do
 curl -fL "https://raw.githubusercontent.com/parcelis/parcelis/${PARCELIS_REF}/.env.production.example" -o .env.production.example
 ```
 
-Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files that include the dedicated worker change. Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
+Replace the placeholder before running these commands. The updated Compose file uses `latest` for Parcelis application images, including `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`. Remove the obsolete `PARCELIS_VERSION` entry from an existing `.env.production`; it no longer selects image tags. Use deployment files and matching app/proxy images that include direct proxy routing from [application PR #582](https://github.com/parcelis/parcelis/pull/582). Older releases require their matching deployment files. Use the same `PARCELIS_REF` for the [PostgreSQL migration helper](upgrade-postgresql.md#before-migrating-to-postgresql-18).
 
 Use the general `docker compose pull` commands only when all images required by the selected Compose file are available. This includes `parcelis/worker:latest` and matching `parcelis/apps:latest` and `parcelis/proxy:latest` images from that revision. If the selected Compose file includes `docs-service`, the matching `parcelis/docs:latest` image must also be published; it is not required when `docs-service` is absent. Until then, use the local-build steps below.
 
@@ -83,14 +83,40 @@ Set `EMAIL_SETTINGS_ENCRYPTION_KEY` to a base64-encoded 32-byte secret before sa
 
 - `migrate` runs Prisma migrations before the app starts
 - `minio-init` creates the object-storage buckets and uploads public brand assets
-- `app` serves the web UI and API
+- `app` runs the web UI and API under Supervisor, without nginx
+- `proxy` routes requests directly to the web and API listeners and waits for app health before starting
 - `worker` uses the dedicated `parcelis/worker` image to dispatch outbox events and process jobs
 
 ## API runtime
 
-The application container runs the Next.js web app and a separate Next.js API
-process behind nginx. Background jobs run in the worker service; PostgreSQL, Redis,
-and MinIO provide the database, queues, and object storage.
+The application container runs the Next.js web app and API as separate processes under
+Supervisor. The separate `parcelis/proxy` container owns HTTP routing; there is no nginx
+inside the modular app image. Background jobs, PostgreSQL, Redis, and object storage keep
+their existing roles.
+
+| Public path | Upstream in the modular stack |
+| --- | --- |
+| `/` and other web paths | Web process at `app-service:3001` |
+| `/api/*`, including NextAuth | API process at `app-service:4000` |
+| `/trpc/*` and `/admin/jobs/*` | API process at `app-service:4000` |
+| `/healthz` | API `/api/v1/health` |
+| `/docs/*`, when `docs-service` is configured | Documentation container, with the `/docs/` prefix removed |
+
+The supplied Compose file publishes only the proxy's HTTP port through `APP_PORT`. Web and
+API ports remain on the container network. Keep those listeners private to the proxy.
+The app health check requests both processes directly; the proxy health check requests web
+and API paths through nginx. These checks establish HTTP liveness and routing, rather than
+full dependency readiness. The proxy's startup dependency does not automatically stop or
+restart it when the app later becomes unhealthy.
+
+Both application Docker targets set `API_INTERNAL_URL` to the API loopback address and
+configured port. Web middleware uses it to check organization access. Avoid overriding it
+with a development URL such as `http://localhost:40010` in a container.
+
+The default API listener is `4000`. If changing the `API_INTERNAL_PORT` build argument,
+supply the same value when building the app and proxy images. The web listener stays on
+`3001`. The [single-image deployment](deploy-with-docker-compose-single-image.md) retains
+its own nginx and loopback application listeners.
 
 The modular app image excludes the worker. Build `parcelis/worker` with the
 `worker` target in the same `Dockerfile.app`; this target builds only the worker
@@ -102,12 +128,13 @@ worker port, and allows 25 seconds for graceful shutdown. Keep the app and worke
 on the `latest` tag. The single-image stack continues to bundle the worker in
 `parcelis/parcelis` and does not require `parcelis/worker`.
 
-The supplied `.env.production.example` sets `API_TRUST_PROXY_HOPS` to `2` for the
-two nginx proxies in this stack. Keep this value only when API traffic exclusively
-passes through those proxies and direct access to the application container is
-restricted. Adjust the count if your deployment changes the proxy path. The application
-default is `0`, which ignores forwarded client IPs.
-Invalid values fail API startup. Restart the API after changing the trusted proxy count.
+The supplied `.env.production.example` sets `API_TRUST_PROXY_HOPS=1` for the one nginx
+hop between the browser and API. Existing environment files override Compose defaults;
+change the old value of `2` to `1` when moving to this topology. This setting controls
+forwarded client IPs, including rate limits. If another trusted reverse proxy sits in
+front, configure the count for that actual request path and restrict direct API access.
+The API's own default outside Compose remains `0`, which ignores forwarded client IPs.
+Invalid values fail API startup; restart the app after changing the count.
 
 ## Verify the deployment
 
@@ -117,7 +144,7 @@ After the containers are running, confirm the expected services are healthy:
 docker compose --env-file .env.production ps
 ```
 
-Then open the public URLs for your deployed web app and docs site. If you need to stop the stack later, run:
+Open the web app through the proxy and verify sign-in, organization-scoped pages, `/api/v1/health`, `/healthz`, and the embedded job dashboard. Check `/docs/` according to the documentation routing in your selected proxy configuration. If organization pages redirect back to the portfolio, verify that the app uses the image-provided `API_INTERNAL_URL`. If you need to stop the stack later, run:
 
 ```bash
 docker compose --env-file .env.production down
@@ -128,6 +155,34 @@ docker compose --env-file .env.production down
 Set `NEXTAUTH_URL` in `.env.production` to the public Parcelis origin, including HTTPS. Generate `NEXTAUTH_SECRET` with `openssl rand -base64 32` and use the same value across web and API instances. The Compose stack forwards both settings to the application container. Changing the secret invalidates NextAuth cookies. Cookie names, host scoping, and Secure behavior use NextAuth defaults based on the HTTP/HTTPS public URL; no `AUTH_COOKIE_*` settings are needed. Existing accounts and passwords continue to work; registration, email verification, and password recovery are unchanged.
 
 ## Upgrading an existing deployment
+
+### Moving to direct proxy routing
+
+Upgrade the app and proxy as a matching pair from the same application revision. The old
+proxy/app pair routes through app port `3000`; the new proxy connects directly to `3001`
+and the configured API port. Mixing these configurations can produce gateway failures.
+
+1. Build the matching app and proxy images, or obtain the matching published images before
+   stopping the existing services. Use the local-build steps above when compatible published
+   images are unavailable.
+2. Preserve saved secrets and environment settings. For the supplied one-proxy topology,
+   set `API_TRUST_PROXY_HOPS=1` in the actual `.env.production` file.
+3. Drain public traffic, then recreate the app and proxy together. For local builds or images
+   already selected locally, do not pull application replacements:
+
+```bash
+docker compose --env-file .env.production stop app-service proxy-service
+docker compose --env-file .env.production up -d --pull never --remove-orphans
+```
+
+4. Confirm both services are healthy and verify the public routes before restoring traffic.
+
+Routing alone introduces no database schema changes. For rollback, restore the previous
+compatible app/proxy pair and its corresponding proxy-count setting. The following database
+and authentication guidance applies separately when the selected application upgrade includes
+those changes.
+
+### Database and authentication upgrades
 
 The NextAuth upgrade removes the database `Session` table. Previous application instances still query that table, so this upgrade requires a maintenance window; do not apply migrations while old instances are serving requests.
 
@@ -148,7 +203,7 @@ for image in $(printf '%s\n' "$parcelis_images" | sort -u); do
   esac
 done
 docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
-docker compose --env-file .env.production stop app-service worker-service
+docker compose --env-file .env.production stop app-service proxy-service worker-service
 docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
 docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```
@@ -157,7 +212,7 @@ For locally built application images, use the same maintenance ordering and pull
 
 ```bash
 docker compose --env-file .env.production pull postgres-service redis-service minio-service minio-init-service
-docker compose --env-file .env.production stop app-service worker-service
+docker compose --env-file .env.production stop app-service proxy-service worker-service
 docker compose --env-file .env.production run --rm --no-deps --pull never migrate-service
 docker compose --env-file .env.production up -d --pull never --remove-orphans
 ```

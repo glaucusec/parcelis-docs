@@ -21,6 +21,13 @@ Use `parcelis/parcelis` when you want:
 
 Use the modular [Docker Compose stack](deploy-with-docker-compose.md#setting-up-parcelis) when you want to deploy or scale the proxy separately. Note that the web app and API run together inside the `parcelis/apps` image in the modular stack, so neither topology scales the web app independently from the API.
 
+The proxy-routing change affects only the modular stack. This single-image target keeps
+nginx on port `3000`, with web and API listeners on loopback. It uses its own Supervisor
+configuration and does not require a separate `parcelis/proxy` container. Both application
+targets set `API_INTERNAL_URL` to the configured loopback API address for organization-access
+checks. The supplied environment example and both Compose stacks default proxy trust to
+`API_TRUST_PROXY_HOPS=1`; count any additional trusted reverse proxy in front separately.
+
 ## Image name and tags
 
 The deployment Compose file and Docker examples use `parcelis/parcelis:latest`. Release publishing also retains version tags. `PARCELIS_VERSION` is no longer used by the supplied Compose file; remove it from an existing environment file.
@@ -171,7 +178,7 @@ If migration fails, keep application traffic disabled until the failure is resol
 | Number of running containers          | One application container plus a worker container plus the migrate and minio-init one-shots | Separate `app` and `worker` containers plus `proxy` plus the same one-shots |
 | Image publishes                       | `parcelis/parcelis` only                                                                    | `parcelis/apps`, `parcelis/worker`, and `parcelis/proxy`               |
 | Documentation site                    | Hosted independently at `https://docs.parcelis.dev/`                               | Hosted independently at `https://docs.parcelis.dev/`                         |
-| Edge routing                          | nginx inside the `parcelis/parcelis` image                                                  | Standalone `parcelis/proxy` image                                                      |
+| Edge routing                          | nginx inside the `parcelis/parcelis` image                                                  | Standalone `parcelis/proxy` routing directly to web and API                                                      |
 | Independent scaling of proxy | Not supported (bundled into the application image)                                          | Supported                                                                              |
 | Independent scaling of web vs API     | Not supported (both run together in either topology)                                        | Not supported (both run together in the `parcelis/apps` image)                          |
 | PostgreSQL, Redis, and object storage | Separate services, identical to the modular stack                                           | Separate services, identical to the single-image stack                                 |
