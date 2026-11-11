@@ -19,6 +19,11 @@ a selected unit if it does not belong to the new property. The choices include a
 units, including those without maintenance tickets. Unit filtering includes tickets associated with that
 unit, including tickets shared with other units, and excludes property-wide tickets without unit associations.
 
+Maintenance View permission provides access to the property and unit filter choices without requiring Properties
+View permission. If unit details fail to load, a notice in the results area identifies potentially incomplete results
+and offers **Retry loading unit details**. Tickets matched by their saved unit IDs remain visible while details
+needed for label-only tickets are unavailable.
+
 Open-ticket counts in Properties link here with the relevant filters already selected. Property, unit, and status
 selections are kept in the URL: `/maintenance?propertyId=3&status=open` shows a property's open tickets, and
 `/maintenance?propertyId=3&unitId=12&status=open` narrows them to one unit. You can change the status after opening

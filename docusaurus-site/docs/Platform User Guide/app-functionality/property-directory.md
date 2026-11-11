@@ -36,3 +36,6 @@ are not links, and unit rows without a saved unit record do not provide a unit l
 Open statuses include New, In Progress, Pending, and Scheduled. You can change the status or other filters on
 Maintenance. If tickets have changed since the directory loaded, the filtered view may show no matching tickets;
 adjust or clear its filters to continue.
+
+Counts exclude archived tickets. A ticket associated with several units counts once for the property and once
+for each associated unit. Tickets saved only with a unit label count against that unit within the same property.
