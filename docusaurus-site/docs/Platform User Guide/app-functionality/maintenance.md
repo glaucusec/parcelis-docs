@@ -13,6 +13,25 @@ actions, archive, and delete.
 Each ticket has a sequential reference number in the format `MNT-0000001`. Use this number when referring to a
 ticket with another team member.
 
+Select **Filters** to narrow tickets by status, property, unit, category, or priority. **Open statuses** includes
+New, In Progress, Pending, and Scheduled. Choosing a property limits the unit choices; changing properties clears
+a selected unit if it does not belong to the new property. The choices include all accessible properties and their
+units, including those without maintenance tickets. Unit filtering includes tickets associated with that
+unit, including tickets shared with other units, and excludes property-wide tickets without unit associations.
+
+Maintenance View permission provides access to the property and unit filter choices without requiring Properties
+View permission. If unit details fail to load, a notice in the results area identifies potentially incomplete results
+and offers **Retry loading unit details**. Tickets matched by their saved unit IDs remain visible while details
+needed for label-only tickets are unavailable.
+
+Open-ticket counts in Properties link here with the relevant filters already selected. Property, unit, and status
+selections are kept in the URL: `/maintenance?propertyId=3&status=open` shows a property's open tickets, and
+`/maintenance?propertyId=3&unitId=12&status=open` narrows them to one unit. You can change the status after opening
+the link. Invalid IDs or status values use the corresponding unfiltered default.
+
+**Clear Filters** resets status, property, unit, category, and priority while retaining the search text and grouping.
+If no tickets match, the page shows an empty state; tickets may have changed since the source count was displayed.
+
 The collapsed **Logging** card shows recent activity across maintenance tickets. Expand it to review when a
 note was added, edited, or deleted, or a ticket was acknowledged, resolved, canceled, reopened, or otherwise moved
 to a different status. Note activity remains in the history after a note is deleted.
