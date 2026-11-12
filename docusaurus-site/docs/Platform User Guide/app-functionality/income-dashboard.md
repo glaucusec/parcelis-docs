@@ -48,7 +48,9 @@ easy to move between related invoices.
 
 Use **Edit invoice** to change the due date or charge lines. You can add and remove charge lines, but an invoice
 always requires at least one line. The edit form shows the existing paid amount and balance so you can review the
-effect of the changes before saving.
+effect of the changes before saving. If an increase leaves a previously paid invoice with a balance, its paid
+settlement details are cleared; recorded payments and their history remain intact. Edits that leave the invoice fully
+paid preserve its settlement details. The total cannot be reduced below the amount already paid.
 
 Use **Record payment** to add the first payment, or **Add payment** when the invoice already has a payment. A fully
 paid invoice is marked **PAID**; invoices with a remaining balance are shown as open, overdue, or partially paid as
@@ -56,6 +58,15 @@ appropriate. Use **Add note** to attach internal notes to the invoice. **Delete*
 its charge lines. Delete is disabled for invoices with payment history, including invoices whose
 payments have all been reversed. Reversing a payment preserves its history and does not make
 the invoice eligible for deletion.
+
+To correct a recorded payment, use **Reverse payment** in the invoice's **Payment activity** section, enter a reason,
+and confirm. This action requires invoice deletion permission. The original payment remains visible with the reversal
+date, staff member, and reason, and its amount is added back to the outstanding balance. Other payments, including
+payments from co-tenants, remain unchanged. Repeating a reversal does not add the amount back twice. Reversal corrects
+the recorded payment; it does not send a refund.
+
+If a payment or invoice changes while you are saving an edit or reversal, the action may report a conflict. Refresh
+and review the latest balance before trying again. Changes that would leave inconsistent balances are rejected.
 
 ## Income by Unit
 
