@@ -35,3 +35,7 @@ The Collection card summarizes current and past-due invoices and collected rent 
 
 Lease History lists each property, unit, lease term, monthly rent, and lease status. Select a property name to open
 its property detail page.
+
+For a shared lease, the row also lists every associated tenant, including the tenant whose profile you are viewing.
+Select a tenant's name to open their profile. Each lease has its own tenant list, so former co-tenants remain
+associated with the relevant lease history. Single-tenant rows do not show an additional tenant list.
