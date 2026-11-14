@@ -48,7 +48,8 @@ Units with an active or notice-period lease are unavailable for a new lease. A l
 ## Listing row actions
 
 These workflows are available from each row’s **Actions** menu on the **Leases**
-dashboard, in grouped and ungrouped views. The detail-page header is unchanged.
+dashboard, in grouped and ungrouped views. The Lease Details header opens the same
+workflow drawers and Notes drawer.
 
 Open a lease detail page by selecting its lease number or choosing **Actions → View** on its row in the
 **Leases** dashboard. The row menu is available in grouped and ungrouped views and requires Leases View

@@ -6,6 +6,19 @@ Open a lease detail page by selecting a lease from the **Leases** dashboard.
 
 On mobile, header actions collapse into the **Actions** menu. On larger screens, primary actions appear beside the menu.
 
+**Edit Lease**, **Renew Lease**, **Edit Tenants**, **Notes**, and **Terminate** open
+exactly the same drawers as the [Leases dashboard row actions](./lease-dashboard.md#listing-row-actions).
+The desktop Edit Lease and Renew Lease buttons use those same drawers. Changes
+refresh the lease details and listing through the existing API operations.
+
+These actions use the same permissions and status restrictions as the listing:
+editing and termination are unavailable for draft, ended, or archived leases;
+tenant editing also requires Tenants View; renewal requires Leases Create and
+Edit; Notes requires both Leases View and Lease Notes View. Existing archive,
+unarchive, deletion, and lifecycle-retry controls continue to use their existing
+handlers. Damage reports are not available.
+
+
 ## Summary
 
 The summary header shows the property, unit, lease term, and current lease status. A lease without an end date is
