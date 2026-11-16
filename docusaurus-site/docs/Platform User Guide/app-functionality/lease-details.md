@@ -45,6 +45,11 @@ Select the property or unit to open its corresponding detail page.
 
 The Associated Tenants card lists every tenant assigned to the lease. Select a tenant to open their lease record in a drawer.
 
+For a shared lease, each tenant card also lists the other **Co-tenants**. Select a co-tenant's name to open
+their tenant profile. The tenant lease record drawer shows everyone assigned to the selected lease,
+including the tenant whose record is open. These lists reflect the lease's saved tenant assignments.
+Single-tenant cards do not show a co-tenant list.
+
 ## Archive or Delete a Lease
 
 Open **Actions → Archive Lease** and confirm to hide a lease from the default lease directory. Archiving preserves its status, tenant assignments, and invoices; it does not terminate the lease or change occupancy. Use the directory's **Archive Status** filter to find archived leases, then **Actions → Unarchive Lease** to restore one.
