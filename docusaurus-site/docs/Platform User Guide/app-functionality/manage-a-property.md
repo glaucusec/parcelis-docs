@@ -34,6 +34,10 @@ Use **Actions → Add Note** in the property detail header to open the Notes dra
 preferences, access details, renewal reminders, or property-specific instructions. The drawer also includes a
 **Files** tab; file attachments are not available yet. Use a note's vertical actions menu to edit or delete it.
 
+Adding, editing, or deleting a property note records an activity event with the property name, acting user,
+time, and note ID. Deleting a note keeps its activity history. These events track the operation without
+storing copies of the note text. Activity queries refresh automatically after a successful note change.
+
 ## Archive a Property
 
 Archiving and unarchiving require Properties Archive permission. Use **Actions → Archive Property** to hide a property from the default property list without permanently deleting it. Archived properties can be found by filtering for archived records. For archived properties, use **Actions → Unarchive Property** to restore them to the active list.
