@@ -63,7 +63,9 @@ paid preserve its settlement details. The total cannot be reduced below the amou
 
 Use **Record payment** to add the first payment, or **Add payment** when the invoice already has a payment. A fully
 paid invoice is marked **PAID**; invoices with a remaining balance are shown as open, overdue, or partially paid as
-appropriate. Use **Add note** to attach internal notes to the invoice. **Delete** permanently removes an invoice and
+appropriate. Use **Add note** to attach internal notes to the invoice. Adding, editing, or deleting a note records
+an entry in **Invoice history** with the note ID, acting user, and timestamp. History refreshes after a successful
+note change and remains after the note is deleted. Activity metadata does not store copies of the note text. **Delete** permanently removes an invoice and
 its charge lines. Delete is disabled for invoices with payment history, including invoices whose
 payments have all been reversed. Hover over **Delete** or move keyboard focus to the button
 to see a tooltip explaining why deletion is unavailable. Reversing a payment preserves its history and does not make
