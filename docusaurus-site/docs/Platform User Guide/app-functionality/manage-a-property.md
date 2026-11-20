@@ -41,3 +41,15 @@ Archiving and unarchiving require Properties Archive permission. Use **Actions �
 ## Delete a Property
 
 Deleting requires both Properties Delete and Units Delete permissions. Use **Actions → Delete Property** only when the property should be permanently removed and has no history. Properties with leases, invoices, applications, maintenance, notes, or activity must be archived so their records remain available. Parcelis asks for confirmation before deleting.
+
+## Change Operational Status
+
+Open **Edit Property**, choose **Operational Status**, then select **Next → Save**. Choose Active for normal
+operation, Leasing for marketing or lease preparation, or Maintenance for property work. Statuses are manual
+and do not automatically follow lease or ticket activity. Use the property directory's **Status** filter to find
+properties with the selected status. Archived properties must be unarchived through the existing action first.
+
+For API clients, `status` on property creation and update accepts `active`, `leasing`, or `maintenance`.
+Omitting it on creation defaults to Active; omitting it on update preserves the current status. Passing
+`archived` is rejected. Attempting an operational status update on an archived property returns a conflict;
+use the archive/reactivate endpoints to manage archived records.

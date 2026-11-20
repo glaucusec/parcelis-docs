@@ -20,6 +20,7 @@ Use the property drawer when onboarding a new property.
 - Property contact phone.
 - Property contact address.
 - Tags.
+- Operational status (Active by default).
 - A property image in JPG, PNG, or WebP format up to 2 MB.
 
 ## Steps
@@ -43,3 +44,18 @@ Use the property drawer when onboarding a new property.
 - Unit utilities and amenities come from Parcelis unit option records.
 - If you close the drawer after making changes, Parcelis asks you to confirm before discarding unsaved work.
 - Uploaded images are stored in MinIO under `properties/{propertyId}/images/{imageId}.{extension}`. Each property can have one current image; uploading a replacement updates the image used throughout Parcelis.
+
+## Operational Status
+
+Choose **Operational Status** in Property Details when creating or editing a property:
+
+- **Active**: the property is in normal operation.
+- **Leasing**: the property is being marketed or prepared for new leases.
+- **Maintenance**: the property is undergoing work that affects its operation.
+
+These statuses are managed manually. Lease occupancy and maintenance tickets do not change them automatically.
+The selected status appears in the property directory and can be used in its Status filter. The portfolio's actively
+leasing count includes properties marked Leasing.
+
+**Archived** remains a separate action. Unarchive a property before changing its operational status; saving other
+property details does not unarchive it.
