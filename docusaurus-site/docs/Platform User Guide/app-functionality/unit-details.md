@@ -25,6 +25,12 @@ The warning does not mark the unit occupied or reserve it; multiple drafts are s
 
 On larger screens, the header groups **Edit Unit**, **All Units**, and **Actions**. On mobile, Edit Unit moves into Actions.
 
+## View All Unit Invoices
+
+Select **View All** on the **Upcoming Invoices** card to open the Income dashboard filtered to the current unit.
+The unit filter is included in the URL, so it remains selected after reloading or sharing the link.
+Use the Income dashboard's filters to change or clear the unit selection.
+
 ## Edit a Unit
 
 On a unit page, select **Edit Unit**. Parcelis opens the property drawer directly on the selected unit's expanded **Unit Details** card. Update the unit fields, then select **Save** to apply the changes.
