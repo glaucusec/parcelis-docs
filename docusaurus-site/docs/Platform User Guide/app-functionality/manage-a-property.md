@@ -37,6 +37,9 @@ preferences, access details, renewal reminders, or property-specific instruction
 Adding, editing, or deleting a property note records an activity event with the property name, acting user,
 time, and note ID. Deleting a note keeps its activity history. These events track the operation without
 storing copies of the note text. Activity queries refresh automatically after a successful note change.
+Changes through the legacy notes fields on the property create, update, and update-notes APIs are also logged.
+Saving identical note text does not add an activity event. Members without Properties View permission cannot
+retrieve property activity events, including through general or property-filtered activity requests.
 
 ## Archive a Property
 
