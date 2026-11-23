@@ -30,6 +30,7 @@ On larger screens, the header groups **Edit Unit**, **All Units**, and **Actions
 Select **View All** on the **Upcoming Invoices** card to open the Income dashboard filtered to the current unit.
 The unit filter is included in the URL, so it remains selected after reloading or sharing the link.
 Use the Income dashboard's filters to change or clear the unit selection.
+**View All** is available only when you have both Invoices View and Leases View permissions.
 
 ## Edit a Unit
 
